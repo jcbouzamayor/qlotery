@@ -1,0 +1,358 @@
+:root {
+	--azul-loteria-oscuro: #003a70;
+	--azul-loteria: #0055a5;
+	--azul-loteria-claro: #1976d2;
+	--superficie: #ffffff;
+	--superficie-suave: #eef5fc;
+	--borde-suave: #c6dcf2;
+	--texto-principal: #0f2942;
+	--texto-suave: #4a6580;
+	--acento-amable: #2e8b57;
+	--sombra-suave: 0 4px 12px rgba(0, 35, 75, 0.16);
+	--radio: 14px;
+}
+
+* {
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	margin: 0;
+	padding: 14px;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background: linear-gradient(180deg, var(--azul-loteria) 0%, var(--azul-loteria-oscuro) 100%);
+	background-attachment: fixed;
+	color: var(--texto-principal);
+	min-height: 100vh;
+	line-height: 1.4;
+}
+
+.app-contenedor {
+	width: 100%;
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+/* Dos tarjetas superiores para Bote total y Bote premios */
+#visorTotales,
+.barra-acciones,
+.barra-vistas,
+.barra-participantes,
+#listadoDinamico,
+form {
+	width: 100%;
+	max-width: 640px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#visorTotales {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	margin-top: 0;
+	margin-bottom: 12px;
+	padding: 0;
+	font-weight: normal;
+}
+
+.tarjeta-bote {
+	background-color: var(--superficie);
+	border-radius: var(--radio);
+	padding: 12px 10px;
+	box-shadow: var(--sombra-suave);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	aspect-ratio: 1 / 0.65;
+	border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.etiqueta-bote {
+	font-size: 0.78rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--texto-suave);
+	margin-bottom: 4px;
+}
+
+.valor-bote {
+	font-size: 1.35rem;
+	font-weight: 800;
+	color: var(--azul-loteria-oscuro);
+}
+
+/* Barras de botones organizadas */
+.barra-acciones {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.barra-vistas {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+/* El 5.º botón ("Premios") ocupa el ancho completo en rejilla de 2 columnas */
+.barra-vistas button:last-child {
+	grid-column: span 2;
+}
+
+@media (min-width: 520px) {
+	.barra-vistas {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+
+	.barra-vistas button:last-child {
+		grid-column: auto;
+	}
+}
+
+.barra-participantes {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+	margin-top: 12px;
+	margin-bottom: 12px;
+}
+
+button {
+	font-family: inherit;
+	font-size: 0.9rem;
+	font-weight: 600;
+	min-height: 44px;
+	padding: 9px 10px;
+	border-radius: 12px;
+	border: none;
+	background-color: var(--superficie);
+	color: var(--azul-loteria-oscuro);
+	box-shadow: 0 2px 6px rgba(0, 25, 55, 0.18);
+	cursor: pointer;
+	transition: transform 0.1s ease, background-color 0.15s ease;
+	width: 100%;
+}
+
+button:hover {
+	background-color: var(--superficie-suave);
+}
+
+button:active {
+	transform: scale(0.97);
+}
+
+button[type="submit"],
+#apostar,
+#botonGuardarPremio,
+#guardarApuestaSemanal,
+#enviar,
+#enviarEdicionParticipante {
+	background-color: var(--acento-amable);
+	color: #ffffff;
+}
+
+button[type="reset"],
+#resetApuestaSemanal {
+	background-color: #e6eef6;
+	color: var(--texto-principal);
+}
+
+#exportarMovimientosTxt {
+	margin-top: 10px;
+}
+
+/* Avisos */
+p[id^="mensaje"],
+p[id^="texto"] {
+	max-width: 640px;
+	margin-left: auto;
+	margin-right: auto;
+	color: #ffffff;
+	font-weight: 600;
+	margin-top: 4px;
+	margin-bottom: 10px;
+}
+
+p[id^="mensaje"]:empty,
+p[id^="texto"]:empty {
+	display: none;
+}
+
+/* Contenedor de listado y formularios */
+form,
+#listadoDinamico {
+	background-color: var(--superficie);
+	border-radius: var(--radio);
+	padding: 12px;
+	box-shadow: var(--sombra-suave);
+	margin-top: 10px;
+	margin-bottom: 12px;
+}
+
+fieldset {
+	border: 1px solid var(--borde-suave);
+	border-radius: 12px;
+	padding: 12px;
+	margin: 0 0 10px 0;
+	background-color: var(--superficie-suave);
+	min-width: 0;
+}
+
+fieldset:last-child {
+	margin-bottom: 0;
+}
+
+legend {
+	padding: 0 8px;
+	font-weight: 700;
+	color: var(--azul-loteria-oscuro);
+	font-size: 0.92rem;
+}
+
+label {
+	display: inline-block;
+	margin-top: 6px;
+	margin-bottom: 4px;
+	font-weight: 600;
+	color: var(--texto-principal);
+	font-size: 0.9rem;
+}
+
+input[type="text"],
+input[type="file"] {
+	width: 100%;
+	min-height: 44px;
+	padding: 9px 12px;
+	border-radius: 10px;
+	border: 1.5px solid var(--borde-suave);
+	background-color: #ffffff;
+	color: var(--texto-principal);
+	font-size: 1rem;
+	font-family: inherit;
+}
+
+input[type="text"]:focus {
+	outline: none;
+	border-color: var(--azul-loteria-claro);
+	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+	width: 18px;
+	height: 18px;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+
+/* Listado principal */
+#listado {
+	list-style: none;
+	padding: 0;
+	margin: 4px 0 0 0;
+}
+
+#listado li {
+	background-color: #ffffff;
+	border: 1px solid var(--borde-suave);
+	border-radius: 10px;
+	padding: 10px 12px;
+	margin-bottom: 8px;
+	font-size: 0.92rem;
+	color: var(--texto-principal);
+	word-break: break-word;
+}
+
+#listado li:last-child {
+	margin-bottom: 0;
+}
+
+/* Cada participante en una sola línea para reducir scroll */
+#listadoEdicionParticipantes {
+	list-style: none;
+	padding: 0;
+	margin: 6px 0 0 0;
+}
+
+#listadoEdicionParticipantes li {
+	background-color: #ffffff;
+	border: 1px solid var(--borde-suave);
+	border-radius: 10px;
+	padding: 6px 8px;
+	margin-bottom: 6px;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 78px auto;
+	align-items: center;
+	gap: 6px;
+}
+
+#listadoEdicionParticipantes li input[type="text"] {
+	width: 100%;
+	min-height: 36px;
+	padding: 6px 8px;
+	font-size: 0.88rem;
+}
+
+#listadoEdicionParticipantes li input[name="saldo"] {
+	text-align: right;
+}
+
+#listadoEdicionParticipantes li label {
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.82rem;
+	white-space: nowrap;
+}
+
+#listadoEdicionParticipantes li input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+}
+
+@media (max-width: 380px) {
+	button {
+		font-size: 0.84rem;
+		padding: 8px 6px;
+	}
+
+	.valor-bote {
+		font-size: 1.15rem;
+	}
+}
+
+@media (max-width: 350px) {
+	#listadoEdicionParticipantes li {
+		grid-template-columns: minmax(0, 1fr) 68px auto;
+		gap: 4px;
+		padding: 6px;
+	}
+}
+p[id^="mensaje"],
+p[id^="texto"] {
+	width: 100%;
+	max-width: 640px;
+	margin: 8px auto;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background-color: rgba(255, 255, 255, 0.16);
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 0.92rem;
+	text-align: center;
+}
+
+p[id^="mensaje"]:empty,
+p[id^="texto"]:empty {
+	display: none;
+}

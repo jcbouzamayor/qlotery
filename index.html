@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>QLotery</title>
+		<link rel="stylesheet" href="estilos.css">
+	</head>
+	<body>
+	<main class="app">
+		<h2 id="visorTotales"></h2>
+
+		<div class="barra-acciones">
+			<button id="crearApuesta" type="button">Crear aposta</button>
+			<button id="guardarPremio" type="button">Gardar premio</button>
+			<button id="botonAjustes" type="button">Axustes</button>
+		</div>
+
+		<p id="mensajeApuesta"></p>
+		<p id="mensajeAjustes"></p>
+
+		<form id="nuevaApuesta" hidden>
+			<fieldset>
+				<legend>Nova Aposta</legend>
+				<label for="importeApuesta">Importe</label>
+				<input id="importeApuesta" type="text" inputmode="numeric" min="0" name="importeApuesta" placeholder="Importe apuesta" value="14">
+				<p id="selectorTipoApuesta">
+					<label for="semanal">Semanal</label>
+					<input id="semanal" type="radio" name="tipoApuesta" value="semanal" checked>
+					<label for="extraordinaria">Extraordinaria</label>
+					<input id="extraordinaria" type="radio" name="tipoApuesta" value="extraordinaria">
+				</p>
+
+				<button id="apostar" type="submit">Apostar</button>
+				<button id="resetApuesta" type="reset">Restablecer</button>
+			</fieldset>
+		</form>
+
+		<form id="novoPremio" hidden>
+			<fieldset>
+				<legend>Gardar Premio</legend>
+				<p>
+					<label for="importePremio">Importe</label>
+					<input id="importePremio" type="text" inputmode="numeric" min="0" name="importePremio" placeholder="Importe premio" value="0">
+					<label for="comentarioPremio">Comentario</label>
+					<input id="comentarioPremio" type="text" maxlength="100" name="comentarioPremio" placeholder="Comentario">
+				</p>
+
+				<button id="botonGuardarPremio" type="submit">Gardar</button>
+				<button id="resetGuardarPremio" type="reset">Restablecer</button>
+			</fieldset>
+		</form>
+
+		<form id="panelAjustes" hidden>
+			<fieldset>
+				<legend>Editar aposta semanal</legend>
+				<label for="inputApuestaSemanal">Importe</label>
+				<input id="inputApuestaSemanal" type="text" inputmode="decimal" min="0" name="inputApuestaSemanal" placeholder="Importe nueva apuesta" value="0">
+				<button id="guardarApuestaSemanal" type="submit">Gardar</button>
+				<button id="resetApuestaSemanal" type="button">Restablecer</button>
+			</fieldset>
+			<fieldset>
+				<legend>Crear Back-up</legend>
+				<button id="exportarJson" type="button">Exportar .json</button>
+
+				<div>
+					<label for="inputImportarJson">Restaurar .json</label>
+					<input id="inputImportarJson" type="file" accept=".json,application/json">
+				</div>
+			</fieldset>
+		</form>
+
+		<div class="barra-vistas">
+			<button id="mostrarParticipantes" type="button">Participantes</button>
+			<button id="mostrarMorosos" type="button">Morosos</button>
+			<button id="mostrarFuturosMorosos" type="button">Futuros morosos</button>
+			<button id="mostrarMovimientos" type="button">Movementos</button>
+			<button id="mostrarPremios" type="button">Premios</button>
+		</div>
+
+		<div id="listadoDinamico">
+			<fieldset>
+				<legend>Listado</legend>
+				<ul id="listado"></ul>
+				<button id="exportarMovimientosTxt" type="button" hidden>Exportar todos movementos (.txt)</button>
+			</fieldset>
+		</div>
+
+		<div class="barra-participantes">
+			<button id="nuevoParticipante" type="button">Engadir participante</button>
+			<button id="editarParticipante" type="button">Editar participante</button>
+		</div>
+
+		<p id="textoEditarParticipante"></p>
+
+		<form id="formParticipante" hidden>
+			<fieldset>
+				<legend>Novo Participante</legend>
+				<p id="textoAdvertencia"></p>
+				<label for="nuevoUsuario">Usuario</label>
+				<input id="nuevoUsuario" type="text" name="nuevoUsuario" placeholder="Nome" maxlength="100">
+				<label for="nuevoSaldo">Saldo inicial</label>
+				<input id="nuevoSaldo" type="text" inputmode="numeric" min="0" name="saldo" placeholder="Saldo inicial">
+				<button id="enviar" type="submit">Gardar</button>
+				<button id="resetParticipante" type="reset">Restablecer</button>
+			</fieldset>
+		</form>
+
+		<form id="formEditarParticipante" hidden>
+			<fieldset>
+				<legend>Editar Participantes</legend>
+
+				<fieldset>
+					<legend>Listado Participantes</legend>
+					<ul id="listadoEdicionParticipantes"></ul>
+				</fieldset>
+				<button id="enviarEdicionParticipante" type="submit">Gardar</button>
+				<button id="resetEdicionParticipante" type="reset">Restablecer</button>
+			</fieldset>
+		</form>
+</main>
+		<script src="app.js"></script>
+	</body>
+</html>
