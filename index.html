@@ -5,15 +5,46 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>QLotery</title>
 		<link rel="stylesheet" href="estilos.css">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 	</head>
 	<body>
 	<main class="app">
+		<nav id="menuLateral" class="menu-lateral" hidden>
+			<button id="mostrarParticipantes" type="button">Participantes</button>
+			<button id="mostrarMorosos" type="button">Morosos</button>
+			<button id="mostrarFuturosMorosos" type="button">Futuros morosos</button>
+			<button id="mostrarMovimientos" type="button">Movementos</button>
+			<button id="mostrarPremios" type="button">Premios</button>
+			<button id="nuevoParticipante" type="button">Engadir participante</button>
+			<button id="editarParticipante" type="button">Editar participante</button>
+			<button id="botonAjustes" type="button">Axustes</button>
+		</nav>
+		<header class="cabecera-app">
+			<button id="botonMenu" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuLateral">
+				&#9776;
+			</button>
+			<h1 class="titulo-app">QLotery</h1>
+		</header>
+
+		<nav id="menuLateral" class="menu-lateral" hidden>
+			<button id="botonAjustes" type="button">Axustes</button>
+			<button id="mostrarParticipantes" type="button">Participantes</button>
+			<button id="mostrarMorosos" type="button">Morosos</button>
+			<button id="mostrarFuturosMorosos" type="button">Futuros morosos</button>
+			<button id="mostrarMovimientos" type="button">Movementos</button>
+			<button id="mostrarPremios" type="button">Premios</button>
+			<button id="nuevoParticipante" type="button">Engadir participante</button>
+			<button id="editarParticipante" type="button">Editar participante</button>
+		</nav>
+
 		<h2 id="visorTotales"></h2>
 
 		<div class="barra-acciones">
 			<button id="crearApuesta" type="button">Crear aposta</button>
 			<button id="guardarPremio" type="button">Gardar premio</button>
-			<button id="botonAjustes" type="button">Axustes</button>
+			<button id="sumarSaldo" type="button">Engadir saldo</button>
 		</div>
 
 		<p id="mensajeApuesta"></p>
@@ -50,6 +81,24 @@
 				<button id="resetGuardarPremio" type="reset">Restablecer</button>
 			</fieldset>
 		</form>
+		<form id="recargaSaldo" hidden>
+			<fieldset>
+				<legend>Añadir saldo</legend>
+				
+					<label for="selectParticipanteSaldo">Participante</label>
+					<select id="selectParticipanteSaldo">
+					
+					</select>
+					<br>
+					<label for="inputRecarga">Importe</label>
+					<input id="inputRecarga" type="text" inputmode="decimal" min="0" name="recargaSaldo" placeholder="Importe recarga" value="0">
+					<br>
+				
+
+				<button id="botonRecargaSaldo" type="submit">Gardar</button>
+				<button id="resetRecargaSaldo" type="reset">Restablecer</button>
+			</fieldset>
+		</form>
 
 		<form id="panelAjustes" hidden>
 			<fieldset>
@@ -70,25 +119,12 @@
 			</fieldset>
 		</form>
 
-		<div class="barra-vistas">
-			<button id="mostrarParticipantes" type="button">Participantes</button>
-			<button id="mostrarMorosos" type="button">Morosos</button>
-			<button id="mostrarFuturosMorosos" type="button">Futuros morosos</button>
-			<button id="mostrarMovimientos" type="button">Movementos</button>
-			<button id="mostrarPremios" type="button">Premios</button>
-		</div>
-
 		<div id="listadoDinamico">
 			<fieldset>
 				<legend>Listado</legend>
 				<ul id="listado"></ul>
 				<button id="exportarMovimientosTxt" type="button" hidden>Exportar todos movementos (.txt)</button>
 			</fieldset>
-		</div>
-
-		<div class="barra-participantes">
-			<button id="nuevoParticipante" type="button">Engadir participante</button>
-			<button id="editarParticipante" type="button">Editar participante</button>
 		</div>
 
 		<p id="textoEditarParticipante"></p>
@@ -118,7 +154,7 @@
 				<button id="resetEdicionParticipante" type="reset">Restablecer</button>
 			</fieldset>
 		</form>
-</main>
+	</main>
 		<script src="app.js"></script>
 	</body>
 </html>

@@ -1,24 +1,24 @@
-let STORAGE_KEY = 'pena_lotera_v7';
+let STORAGE_KEY = 'pena_lotera_v2.1';
 let vistaActual = "morosos";
 let mostrarTodosMovimientos = false;
 let estado = {
 	participantes: [
 		{ id: 1, nombre: "Rafael Lugris", saldo: 600, activo: true },
-		{ id: 2, nombre: "Borja Ardá", saldo: -100, activo: true },
+		{ id: 2, nombre: "Borja Ardá", saldo: 900, activo: true },
 		{ id: 3, nombre: "Luis Toimil", saldo: 200, activo: true },
 		{ id: 4, nombre: "Bruno Tembrás", saldo: 500, activo: true },
-		{ id: 5, nombre: "Juan Carlos González", saldo: -100, activo: true },
-		{ id: 6, nombre: "Angel Piñon", saldo: -100, activo: true },
+		{ id: 5, nombre: "Juan Carlos González", saldo: 1900, activo: true },
+		{ id: 6, nombre: "Angel Piñon", saldo: 900, activo: true },
 		{ id: 7, nombre: "Oscar López", saldo: 100, activo: true },
-		{ id: 8, nombre: "Jesus Freire", saldo: 0, activo: true },
-		{ id: 9, nombre: "David Lamas", saldo: 100, activo: true },
+		{ id: 8, nombre: "Jesus Freire", saldo: 1000, activo: true },
+		{ id: 9, nombre: "David Lamas", saldo: 2100, activo: true },
 		{ id: 10, nombre: "Roberto de la Puente", saldo: 200, activo: true },
 		{ id: 11, nombre: "Azucena Rico", saldo: 1700, activo: true },
 		{ id: 12, nombre: "Alberto Sebastian", saldo: 0, activo: true },
 		{ id: 13, nombre: "Martin Lopez", saldo: 100, activo: true },
 		{ id: 14, nombre: "Andres Castro", saldo: 1500, activo: true }
 	],
-	botePremios: 17376,
+	botePremios: 17576,
 	apuestaSemanal: 1400,
 	movimientos: []
 };
@@ -31,9 +31,20 @@ const VISTAS_CON_LISTADO = [
 	"premios"
 ];
 
-const PANELES_SUPERIORES = ["nuevaApuesta", "novoPremio", "panelAjustes"];
+const PANELES_SUPERIORES = ["nuevaApuesta", "novoPremio", "panelAjustes", "recargaSaldo"];
 const PANELES_PARTICIPANTES = ["formParticipante", "formEditarParticipante"];
 const TODOS_LOS_PANELES = [...PANELES_SUPERIORES, ...PANELES_PARTICIPANTES];
+
+function cerrarMenuLateral() {
+	let menu = document.getElementById("menuLateral");
+	let botonMenu = document.getElementById("botonMenu");
+	if (menu) {
+		menu.setAttribute("hidden", "");
+	}
+	if (botonMenu) {
+		botonMenu.setAttribute("aria-expanded", "false");
+	}
+}
 
 function ocultarFormularios(ids) {
 	ids.forEach((id) => {
@@ -66,8 +77,6 @@ function actualizarVisibilidadListadoSegunPaneles() {
 
 	if (hayPanelAbierto) {
 		ocultarListadoContenedor();
-	} else if (VISTAS_CON_LISTADO.includes(vistaActual)) {
-		mostrarListadoContenedor();
 	}
 }
 
@@ -161,12 +170,6 @@ function renderizarListado() {
 	let listado = document.getElementById("listado");
 	if (!listado) {
 		return;
-	}
-
-	if (VISTAS_CON_LISTADO.includes(vistaActual)) {
-		mostrarListadoContenedor();
-	} else {
-		ocultarListadoContenedor();
 	}
 
 	let btnExportarTxt = document.getElementById("exportarMovimientosTxt");
@@ -321,6 +324,40 @@ function abrirAjustes() {
 	}
 }
 
+function rellenarSelectParticipantesSaldo() {
+	let selectParticipanteSaldo = document.getElementById("selectParticipanteSaldo");
+	if (!selectParticipanteSaldo) return;
+	selectParticipanteSaldo.innerHTML = "";
+
+	for (let i = 0; i < estado.participantes.length; i++) {
+		let participanteActual = estado.participantes[i];
+		let saldoFormateado = formatearEuros(participanteActual.saldo);
+		let textoSelect = participanteActual.nombre + " (" + saldoFormateado + ")";
+		let opcion = document.createElement("option");
+		opcion.value = participanteActual.id;
+		opcion.textContent = textoSelect;
+		selectParticipanteSaldo.appendChild(opcion);
+	}
+}
+
+document.getElementById("botonMenu").addEventListener("click", (evento) => {
+	evento.preventDefault();
+	let menu = document.getElementById("menuLateral");
+	let botonMenu = document.getElementById("botonMenu");
+	if (!menu) return;
+
+	menu.toggleAttribute("hidden");
+	if (botonMenu) {
+		botonMenu.setAttribute("aria-expanded", String(!menu.hasAttribute("hidden")));
+	}
+});
+
+document.addEventListener("keydown", (evento) => {
+	if (evento.key === "Escape") {
+		cerrarMenuLateral();
+	}
+});
+
 document.getElementById("guardarApuestaSemanal").addEventListener("click", (evento) => {
 	evento.preventDefault();
 	let inputApuesta = document.getElementById("inputApuestaSemanal");
@@ -347,7 +384,7 @@ document.getElementById("guardarApuestaSemanal").addEventListener("click", (even
 
 cargarEstado();
 renderizarTotales();
-renderizarListado();
+ocultarListadoContenedor();
 
 document.getElementById("formParticipante").addEventListener("submit", (evento) => {
 	evento.preventDefault();
@@ -387,14 +424,16 @@ document.getElementById("formParticipante").addEventListener("submit", (evento) 
 	document.getElementById("formParticipante").setAttribute("hidden", "");
 	vistaActual = "participantes";
 	renderizarListado();
+	ocultarListadoContenedor();
 	let avisoEdicion = document.getElementById("textoEditarParticipante");
 	if (avisoEdicion) avisoEdicion.innerHTML = "Participante gardado correctamente.";
 });
 
 document.getElementById("crearApuesta").addEventListener("click", (evento) => {
 	evento.preventDefault();
+	cerrarMenuLateral();
 	limpiarComentarios();
-	ocultarFormularios(["novoPremio", "panelAjustes", ...PANELES_PARTICIPANTES]);
+	ocultarFormularios(["novoPremio", "panelAjustes", "recargaSaldo", ...PANELES_PARTICIPANTES]);
 
 	let formularioApuesta = document.getElementById("nuevaApuesta");
 	formularioApuesta.toggleAttribute("hidden");
@@ -406,8 +445,9 @@ document.getElementById("crearApuesta").addEventListener("click", (evento) => {
 
 document.getElementById("guardarPremio").addEventListener("click", (evento) => {
 	evento.preventDefault();
+	cerrarMenuLateral();
 	limpiarComentarios();
-	ocultarFormularios(["nuevaApuesta", "panelAjustes", ...PANELES_PARTICIPANTES]);
+	ocultarFormularios(["nuevaApuesta", "panelAjustes", "recargaSaldo", ...PANELES_PARTICIPANTES]);
 
 	let formularioPremio = document.getElementById("novoPremio");
 	formularioPremio.toggleAttribute("hidden");
@@ -419,13 +459,15 @@ document.getElementById("guardarPremio").addEventListener("click", (evento) => {
 
 document.getElementById("botonAjustes").addEventListener("click", (evento) => {
 	evento.preventDefault();
+	cerrarMenuLateral();
 	limpiarComentarios();
-	ocultarFormularios(["nuevaApuesta", "novoPremio", ...PANELES_PARTICIPANTES]);
+	ocultarFormularios(["nuevaApuesta", "novoPremio", "recargaSaldo", ...PANELES_PARTICIPANTES]);
 	abrirAjustes();
 	actualizarVisibilidadListadoSegunPaneles();
 });
 
 document.getElementById("nuevoParticipante").addEventListener("click", () => {
+	cerrarMenuLateral();
 	limpiarComentarios();
 	ocultarFormularios([...PANELES_SUPERIORES, "formEditarParticipante"]);
 
@@ -438,6 +480,7 @@ document.getElementById("nuevoParticipante").addEventListener("click", () => {
 });
 
 document.getElementById("editarParticipante").addEventListener("click", () => {
+	cerrarMenuLateral();
 	limpiarComentarios();
 	ocultarFormularios([...PANELES_SUPERIORES, "formParticipante"]);
 
@@ -450,9 +493,11 @@ document.getElementById("editarParticipante").addEventListener("click", () => {
 });
 
 function cerrarFormulariosYMostrarVista(nuevaVista) {
+	cerrarMenuLateral();
 	ocultarFormularios(TODOS_LOS_PANELES);
 	vistaActual = nuevaVista;
 	renderizarListado();
+	mostrarListadoContenedor();
 	limpiarComentarios();
 }
 
@@ -532,8 +577,14 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 			}
 		}
 
-		vistaActual = contadorMorosos > 0 ? "morosos" : "participantes";
-		renderizarListado();
+		if (contadorMorosos > 0) {
+			vistaActual = "morosos";
+			renderizarListado();
+			mostrarListadoContenedor();
+		} else {
+			ocultarListadoContenedor();
+		}
+
 		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta semanal rexistrada correctamente.";
 	} else if (boteAfectado === "extraordinaria") {
 		let cantidadApostada = Math.round(importeNum * 100);
@@ -541,6 +592,7 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 		registrarMovimientos(formatearEuros(cantidadApostada), "Aposta extraordinaria", "Desconta Bote Premios", "");
 		renderizarTotales();
 		guardarEstado();
+		ocultarListadoContenedor();
 		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta extraordinaria rexistrada correctamente.";
 	}
 });
@@ -566,6 +618,7 @@ document.getElementById("novoPremio").addEventListener("submit", (evento) => {
 	registrarMovimientos(formatearEuros(premioCentimos), "Premios", "Suma Bote Premios", comentarioPremio);
 	renderizarTotales();
 	renderizarListado();
+	ocultarListadoContenedor();
 	guardarEstado();
 });
 
@@ -657,6 +710,7 @@ document.getElementById("enviarEdicionParticipante").addEventListener("click", (
 
 	vistaActual = "participantes";
 	renderizarListado();
+	ocultarListadoContenedor();
 
 	if (aviso) aviso.textContent = "Cambios gardados correctamente.";
 });
@@ -687,6 +741,7 @@ document.getElementById("inputImportarJson").addEventListener("change", (evento)
 			guardarEstado();
 			renderizarTotales();
 			renderizarListado();
+			ocultarListadoContenedor();
 
 			let inputApuesta = document.getElementById("inputApuestaSemanal");
 			if (inputApuesta) {
@@ -725,25 +780,6 @@ document.getElementById("resetApuestaSemanal").addEventListener("click", () => {
 	document.getElementById("inputApuestaSemanal").value = (estado.apuestaSemanal / 100).toFixed(2);
 });
 
-document.getElementById("panelAjustes").addEventListener("submit", (evento) => {
-	evento.preventDefault();
-	let aviso = document.getElementById("mensajeAjustes");
-	let cadena = document.getElementById("inputApuestaSemanal").value;
-	let limpia = cadena.trim().replace(",", ".");
-	let num = Number(limpia);
-
-	if (limpia === "" || isNaN(num) || num <= 0) {
-		if (aviso) aviso.textContent = "O importe da aposta semanal non é correcto.";
-		return;
-	}
-
-	estado.apuestaSemanal = Math.round(num * 100);
-	guardarEstado();
-	renderizarTotales();
-	if (aviso) aviso.textContent = "Aposta semanal gardada.";
-	
-});
-
 document.getElementById("exportarMovimientosTxt").addEventListener("click", () => {
 	let aviso = document.getElementById("mensajeAjustes");
 
@@ -779,4 +815,61 @@ document.getElementById("exportarMovimientosTxt").addEventListener("click", () =
 	URL.revokeObjectURL(url);
 
 	if (aviso) aviso.textContent = "Movementos exportados a TXT.";
+});
+
+document.getElementById("sumarSaldo").addEventListener("click", () => {
+	limpiarComentarios();
+	ocultarFormularios(["nuevaApuesta", "novoPremio", "panelAjustes", ...PANELES_PARTICIPANTES]);
+	let formRecarga = document.getElementById("recargaSaldo");
+	if (!formRecarga) return;
+	formRecarga.toggleAttribute("hidden");
+	if (!formRecarga.hasAttribute("hidden")) {
+		rellenarSelectParticipantesSaldo();
+		let inputRecarga = document.getElementById("inputRecarga");
+		if (inputRecarga) {
+			inputRecarga.focus();
+		}
+	}
+	actualizarVisibilidadListadoSegunPaneles();
+});
+
+document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) => {
+	evento.preventDefault();
+	limpiarComentarios();
+	let mensajeSaldo = document.getElementById("mensajeApuesta");
+	let selectParticipante = document.getElementById("selectParticipanteSaldo");
+	let inputImporteRecarga = document.getElementById("inputRecarga");
+	if (!selectParticipante || !inputImporteRecarga) return;
+
+	let idSeleccionado = Number(selectParticipante.value);
+	let participante = estado.participantes.find((p) => p.id === idSeleccionado);
+	if (!participante) return;
+
+	let importeLimpio = inputImporteRecarga.value.trim().replace(",", ".");
+	let importeNum = Number(importeLimpio);
+
+	if (importeLimpio === "" || Number.isNaN(importeNum) || importeNum <= 0) {
+		mensajeSaldo.innerHTML = "El importe no es correcto.";
+		return;
+	}
+
+	let importeEnCentimos = Math.round(importeNum * 100);
+	participante.saldo += importeEnCentimos;
+
+	registrarMovimientos(
+		formatearEuros(importeEnCentimos),
+		"Engadir saldo",
+		participante.nombre,
+		"Saldo engadido (" + formatearEuros(participante.saldo) + ")"
+	);
+
+	inputImporteRecarga.value = "0";
+	guardarEstado();
+	renderizarTotales();
+	renderizarListado();
+
+	let formRecarga = document.getElementById("recargaSaldo");
+	if (formRecarga) formRecarga.setAttribute("hidden", "");
+	actualizarVisibilidadListadoSegunPaneles();
+	mensajeSaldo.innerHTML = "Saldo engadido correctamente.";
 });

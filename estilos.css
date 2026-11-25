@@ -1,3 +1,4 @@
+
 :root {
 	--azul-loteria-oscuro: #003a70;
 	--azul-loteria: #0055a5;
@@ -7,7 +8,9 @@
 	--borde-suave: #c6dcf2;
 	--texto-principal: #0f2942;
 	--texto-suave: #4a6580;
-	--acento-amable: #2e8b57;
+	--acento-amable: #2a8c6a;
+	--acento-amable-oscuro: #1f6b50;
+	--acento-amable-suave: #e8f6f0;
 	--sombra-suave: 0 4px 12px rgba(0, 35, 75, 0.16);
 	--radio: 14px;
 }
@@ -17,10 +20,14 @@
 	-webkit-tap-highlight-color: transparent;
 }
 
+[hidden] {
+	display: none !important;
+}
+
 body {
 	margin: 0;
 	padding: 14px;
-	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	background: linear-gradient(180deg, var(--azul-loteria) 0%, var(--azul-loteria-oscuro) 100%);
 	background-attachment: fixed;
 	color: var(--texto-principal);
@@ -28,17 +35,117 @@ body {
 	line-height: 1.4;
 }
 
+.app,
 .app-contenedor {
 	width: 100%;
 	max-width: 640px;
 	margin: 0 auto;
 }
 
+/* Encabezado superior con hamburguesa a la izquierda y QLotery */
+.cabecera-app {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 10px;
+	padding: 8px 12px;
+	border-radius: var(--radio);
+	background-color: rgba(255, 255, 255, 0.14);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	box-shadow: var(--sombra-suave);
+}
+
+#botonMenu {
+	width: 44px;
+	min-width: 44px;
+	height: 44px;
+	min-height: 44px;
+	padding: 0;
+	font-size: 1.25rem;
+	line-height: 1;
+	border-radius: 11px;
+	background-color: var(--superficie);
+	color: var(--azul-loteria-oscuro);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#botonMenu:hover {
+	background-color: var(--acento-amable-suave);
+	color: var(--acento-amable-oscuro);
+}
+
+.titulo-app {
+	margin: 0;
+	flex: 1;
+	font-family: "Fraunces", Georgia, serif;
+	font-size: 1.55rem;
+	font-weight: 800;
+	font-variation-settings: "SOFT" 80, "WONK" 1;
+	letter-spacing: -0.01em;
+	color: #ffffff;
+	text-shadow: 0 2px 6px rgba(0, 20, 45, 0.4);
+}
+
+/* Menú desplegable de tres rayas */
+.menu-lateral {
+	background-color: var(--superficie);
+	border-radius: var(--radio);
+	padding: 10px;
+	margin-bottom: 12px;
+	box-shadow: var(--sombra-suave);
+	border: 1px solid var(--borde-suave);
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.menu-lateral button {
+	background-color: var(--superficie-suave);
+	color: var(--azul-loteria-oscuro);
+	box-shadow: none;
+	border: 1px solid var(--borde-suave);
+	text-align: left;
+	padding: 9px 12px;
+}
+
+.menu-lateral button:hover {
+	background-color: var(--acento-amable-suave);
+	border-color: var(--acento-amable);
+	color: var(--acento-amable-oscuro);
+}
+
+/* Los 3 últimos botones (Engadir, Editar, Axustes) destacados y ordenados */
+#nuevoParticipante,
+#editarParticipante,
+#botonAjustes {
+	background-color: #ffffff;
+	border-style: dashed;
+}
+
+#botonAjustes {
+	grid-column: span 2;
+	text-align: center;
+	background-color: var(--acento-amable-suave);
+	border-style: solid;
+	border-color: var(--acento-amable);
+	color: var(--acento-amable-oscuro);
+}
+
+@media (min-width: 500px) {
+	.menu-lateral {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	#botonAjustes {
+		grid-column: auto;
+	}
+}
+
 /* Dos tarjetas superiores para Bote total y Bote premios */
 #visorTotales,
 .barra-acciones,
-.barra-vistas,
-.barra-participantes,
 #listadoDinamico,
 form {
 	width: 100%;
@@ -68,7 +175,25 @@ form {
 	justify-content: center;
 	text-align: center;
 	aspect-ratio: 1 / 0.65;
-	border: 2px solid rgba(255, 255, 255, 0.8);
+	border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.tarjeta-bote:last-child .etiqueta-bote {
+	font-size: 0.86rem;
+	color: var(--acento-amable-oscuro);
+}
+
+.tarjeta-bote:last-child .valor-bote {
+	font-size: 2rem;
+	font-weight: 1000;
+	color: var(--acento-amable-oscuro);
+	line-height: 1.15;
+}
+
+@media (max-width: 380px) {
+	.tarjeta-bote:last-child .valor-bote {
+		font-size: 1.42rem;
+	}
 }
 
 .etiqueta-bote {
@@ -86,50 +211,29 @@ form {
 	color: var(--azul-loteria-oscuro);
 }
 
-/* Barras de botones organizadas */
+.tarjeta-bote:last-child .valor-bote {
+	color: var(--acento-amable-oscuro);
+}
+
+/* Acciones principales visibles: Crear aposta y Gardar premio */
+/* Crear aposta arriba a ancho completo; los otros dos botones debajo al 50% */
 .barra-acciones {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 8px;
 	margin-bottom: 10px;
 }
 
-.barra-vistas {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 8px;
-	margin-bottom: 12px;
-}
-
-/* El 5.º botón ("Premios") ocupa el ancho completo en rejilla de 2 columnas */
-.barra-vistas button:last-child {
-	grid-column: span 2;
-}
-
-@media (min-width: 520px) {
-	.barra-vistas {
-		grid-template-columns: repeat(5, minmax(0, 1fr));
-	}
-
-	.barra-vistas button:last-child {
-		grid-column: auto;
-	}
-}
-
-.barra-participantes {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 8px;
-	margin-top: 12px;
-	margin-bottom: 12px;
+.barra-acciones #crearApuesta {
+	grid-column: 1 / -1;
 }
 
 button {
 	font-family: inherit;
 	font-size: 0.9rem;
-	font-weight: 600;
+	font-weight: 700;
 	min-height: 44px;
-	padding: 9px 10px;
+	padding: 9px 12px;
 	border-radius: 12px;
 	border: none;
 	background-color: var(--superficie);
@@ -148,6 +252,15 @@ button:active {
 	transform: scale(0.97);
 }
 
+#crearApuesta {
+	background-color: var(--acento-amable);
+	color: #ffffff;
+}
+
+#crearApuesta:hover {
+	background-color: var(--acento-amable-oscuro);
+}
+
 button[type="submit"],
 #apostar,
 #botonGuardarPremio,
@@ -158,6 +271,15 @@ button[type="submit"],
 	color: #ffffff;
 }
 
+button[type="submit"]:hover,
+#apostar:hover,
+#botonGuardarPremio:hover,
+#guardarApuestaSemanal:hover,
+#enviar:hover,
+#enviarEdicionParticipante:hover {
+	background-color: var(--acento-amable-oscuro);
+}
+
 button[type="reset"],
 #resetApuestaSemanal {
 	background-color: #e6eef6;
@@ -166,18 +288,26 @@ button[type="reset"],
 
 #exportarMovimientosTxt {
 	margin-top: 10px;
+	background-color: var(--acento-amable-suave);
+	color: var(--acento-amable-oscuro);
+	border: 1px solid rgba(42, 140, 106, 0.35);
+	box-shadow: none;
 }
 
 /* Avisos */
 p[id^="mensaje"],
 p[id^="texto"] {
+	width: 100%;
 	max-width: 640px;
-	margin-left: auto;
-	margin-right: auto;
-	color: #ffffff;
-	font-weight: 600;
-	margin-top: 4px;
-	margin-bottom: 10px;
+	margin: 8px auto;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background-color: var(--acento-amable-suave);
+	border: 1px solid rgba(42, 140, 106, 0.45);
+	color: var(--acento-amable-oscuro);
+	font-weight: 700;
+	font-size: 0.92rem;
+	text-align: center;
 }
 
 p[id^="mensaje"]:empty,
@@ -240,8 +370,8 @@ input[type="file"] {
 
 input[type="text"]:focus {
 	outline: none;
-	border-color: var(--azul-loteria-claro);
-	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+	border-color: var(--acento-amable);
+	box-shadow: 0 0 0 3px rgba(42, 140, 106, 0.2);
 }
 
 input[type="checkbox"],
@@ -250,6 +380,7 @@ input[type="radio"] {
 	height: 18px;
 	vertical-align: middle;
 	margin-right: 6px;
+	accent-color: var(--acento-amable);
 }
 
 /* Listado principal */
@@ -262,6 +393,7 @@ input[type="radio"] {
 #listado li {
 	background-color: #ffffff;
 	border: 1px solid var(--borde-suave);
+	border-left: 4px solid var(--acento-amable);
 	border-radius: 10px;
 	padding: 10px 12px;
 	margin-bottom: 8px;
@@ -337,22 +469,44 @@ input[type="radio"] {
 		padding: 6px;
 	}
 }
-p[id^="mensaje"],
-p[id^="texto"] {
+
+select {
 	width: 100%;
-	max-width: 640px;
-	margin: 8px auto;
-	padding: 10px 12px;
+	min-height: 44px;
+	padding: 9px 36px 9px 12px;
 	border-radius: 10px;
-	background-color: rgba(255, 255, 255, 0.16);
-	border: 1px solid rgba(255, 255, 255, 0.35);
-	color: #ffffff;
-	font-weight: 600;
-	font-size: 0.92rem;
-	text-align: center;
+	border: 1.5px solid var(--borde-suave);
+	background-color: #ffffff;
+	color: var(--texto-principal);
+	font-size: 1rem;
+	font-family: inherit;
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23003a70' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	background-size: 16px;
 }
 
-p[id^="mensaje"]:empty,
-p[id^="texto"]:empty {
-	display: none;
+select:focus {
+	outline: none;
+	border-color: var(--acento-amable);
+	box-shadow: 0 0 0 3px rgba(42, 140, 106, 0.2);
+}
+
+select:hover {
+	border-color: var(--azul-loteria-claro);
+}
+
+#recargaSaldo p {
+	margin: 0 0 10px 0;
+}
+
+#recargaSaldo label[for="recarga"] {
+	margin-top: 10px;
+}
+
+#recargaSaldo button[type="submit"] {
+	margin-bottom: 8px;
 }
