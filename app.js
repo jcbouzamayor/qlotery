@@ -1,6 +1,8 @@
-let STORAGE_KEY = 'pena_lotera_v2.1';
+let STORAGE_KEY = 'pena_lotera_v2.4';
 let vistaActual = "morosos";
 let mostrarTodosMovimientos = false;
+let fotoInformeApuesta = null;
+
 let estado = {
 	participantes: [
 		{ id: 1, nombre: "Rafael Lugris", saldo: 600, activo: true },
@@ -34,6 +36,15 @@ const VISTAS_CON_LISTADO = [
 const PANELES_SUPERIORES = ["nuevaApuesta", "novoPremio", "panelAjustes", "recargaSaldo"];
 const PANELES_PARTICIPANTES = ["formParticipante", "formEditarParticipante"];
 const TODOS_LOS_PANELES = [...PANELES_SUPERIORES, ...PANELES_PARTICIPANTES];
+
+function escaparHtml(texto) {
+	return String(texto ?? "")
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
 
 function cerrarMenuLateral() {
 	let menu = document.getElementById("menuLateral");
@@ -329,15 +340,170 @@ function rellenarSelectParticipantesSaldo() {
 	if (!selectParticipanteSaldo) return;
 	selectParticipanteSaldo.innerHTML = "";
 
-	for (let i = 0; i < estado.participantes.length; i++) {
-		let participanteActual = estado.participantes[i];
-		let saldoFormateado = formatearEuros(participanteActual.saldo);
+	let participantesOrdenados = [...estado.participantes].sort(
+		(a, b) => Number(a.saldo) - Number(b.saldo)
+	);
+
+	for (let i = 0; i < participantesOrdenados.length; i++) {
+		let participanteActual = participantesOrdenados[i];
+		let saldoNum = Number(participanteActual.saldo);
+		let saldoFormateado = formatearEuros(saldoNum);
 		let textoSelect = participanteActual.nombre + " (" + saldoFormateado + ")";
 		let opcion = document.createElement("option");
 		opcion.value = participanteActual.id;
 		opcion.textContent = textoSelect;
 		selectParticipanteSaldo.appendChild(opcion);
 	}
+}
+
+function prepararFotoDesdeArchivo(archivo) {
+	return new Promise((resolve, reject) => {
+		let lector = new FileReader();
+		lector.onload = () => {
+			let img = new Image();
+			img.onload = () => {
+				let maxAncho = 900;
+				let ancho = img.width;
+				let alto = img.height;
+
+				if (ancho > maxAncho) {
+					alto = Math.round((alto * maxAncho) / ancho);
+					ancho = maxAncho;
+				}
+
+				let canvas = document.createElement("canvas");
+				canvas.width = ancho;
+				canvas.height = alto;
+				let ctx = canvas.getContext("2d");
+				ctx.drawImage(img, 0, 0, ancho, alto);
+				resolve(canvas.toDataURL("image/jpeg", 0.82));
+			};
+			img.onerror = reject;
+			img.src = lector.result;
+		};
+		lector.onerror = reject;
+		lector.readAsDataURL(archivo);
+	});
+}
+
+function descargarInformeApuestaHtml({ tipoApuesta, importeCentimos }) {
+	let fechaTexto = new Date().toLocaleString("es-ES");
+	let fechaArchivo = new Date().toISOString().slice(0, 10);
+
+	let morosos = estado.participantes.filter((p) => p.activo && Number(p.saldo) < 0);
+	let participantesActivos = estado.participantes.filter((p) => p.activo);
+
+	let filasMorosos =
+		morosos.length === 0
+			? '<p class="sin-datos">Non hai morosos tras esta aposta.</p>'
+			: '<ul class="lista-informe">' +
+				morosos
+					.map(
+						(p) =>
+							'<li class="moroso"><span>' +
+							escaparHtml(p.nombre) +
+							'</span><strong>' +
+							escaparHtml(formatearEuros(p.saldo)) +
+							'</strong></li>'
+					)
+					.join("") +
+				'</ul>';
+
+	let filasSaldos =
+		'<table class="tabla-saldos"><thead><tr><th>Participante</th><th>Saldo</th></tr></thead><tbody>' +
+		participantesActivos
+			.map((p) => {
+				let claseSaldo = Number(p.saldo) < 0 ? "negativo" : "";
+				return (
+					'<tr><td>' +
+					escaparHtml(p.nombre) +
+					'</td><td class="' +
+					claseSaldo +
+					'">' +
+					escaparHtml(formatearEuros(p.saldo)) +
+					'</td></tr>'
+				);
+			})
+			.join("") +
+		'</tbody></table>';
+
+	let bloqueFoto = fotoInformeApuesta
+		? '<section class="card"><h2>Foto adxunta</h2><img src="' +
+			fotoInformeApuesta +
+			'" alt="Foto da aposta" class="foto-apuesta"></section>'
+		: "";
+
+	let htmlDocumento =
+		'<!DOCTYPE html><html lang="gl"><head><meta charset="UTF-8">' +
+		'<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+		'<title>Informe aposta QLotery - ' +
+		escaparHtml(fechaArchivo) +
+		'</title><style>' +
+		'body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#eef5fc;color:#0f2942;margin:0;padding:16px;}' +
+		'.contenedor{max-width:680px;margin:0 auto;}' +
+		'.cabecera{background:#003a70;color:#fff;padding:16px 20px;border-radius:12px;margin-bottom:14px;}' +
+		'.cabecera h1{margin:0 0 6px 0;font-size:1.35rem;}' +
+		'.cabecera p{margin:0;font-size:0.9rem;opacity:0.9;}' +
+		'.card{background:#fff;border:1px solid #c6dcf2;border-radius:12px;padding:16px;margin-bottom:14px;}' +
+		'.card h2{margin:0 0 10px 0;font-size:1.05rem;color:#003a70;}' +
+		'.lista-informe{list-style:none;padding:0;margin:0;}' +
+		'.lista-informe li{display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#fff5f5;border:1px solid #f3c6c6;margin-bottom:6px;color:#8e1b1b;}' +
+		'.sin-datos{margin:0;color:#1f6b50;font-weight:600;}' +
+		'.tabla-saldos{width:100%;border-collapse:collapse;font-size:0.95rem;}' +
+		'.tabla-saldos th,.tabla-saldos td{padding:8px 10px;border-bottom:1px solid #e2ecf6;text-align:left;}' +
+		'.tabla-saldos th:last-child,.tabla-saldos td:last-child{text-align:right;}' +
+		'.negativo{color:#b42318;font-weight:700;}' +
+		'.foto-apuesta{display:block;max-width:100%;height:auto;border-radius:10px;border:1px solid #c6dcf2;}' +
+		'</style></head><body><div class="contenedor">' +
+		'<header class="cabecera"><h1>QLotery · Informe de aposta</h1><p>' +
+		escaparHtml(fechaTexto) +
+		'</p></header>' +
+		'<section class="card"><h2>Resumo da aposta</h2>' +
+		'<p><strong>Tipo:</strong> ' +
+		escaparHtml(tipoApuesta === "semanal" ? "Aposta semanal" : "Aposta extraordinaria") +
+		'</p>' +
+		'<p><strong>Importe:</strong> ' +
+		escaparHtml(formatearEuros(importeCentimos)) +
+		'</p>' +
+		'<p><strong>Bote premios actual:</strong> ' +
+		escaparHtml(formatearEuros(estado.botePremios)) +
+		'</p></section>' +
+		bloqueFoto +
+		'<section class="card"><h2>Morosos (' +
+		morosos.length +
+		')</h2>' +
+		filasMorosos +
+		'</section>' +
+		'<section class="card"><h2>Saldos actuais</h2>' +
+		filasSaldos +
+		'</section>' +
+		'</div></body></html>';
+
+	let blob = new Blob([htmlDocumento], { type: "text/html;charset=utf-8" });
+	let url = URL.createObjectURL(blob);
+	let enlace = document.createElement("a");
+	enlace.href = url;
+	enlace.download = "qlotery_informe_apuesta_" + fechaArchivo + ".html";
+	document.body.appendChild(enlace);
+	enlace.click();
+	enlace.remove();
+	URL.revokeObjectURL(url);
+}
+
+let inputFotoEl = document.getElementById("inputFotoApuesta");
+if (inputFotoEl) {
+	inputFotoEl.addEventListener("change", async (evento) => {
+		let archivo = evento.target.files && evento.target.files[0];
+		if (!archivo) {
+			fotoInformeApuesta = null;
+			return;
+		}
+		try {
+			fotoInformeApuesta = await prepararFotoDesdeArchivo(archivo);
+		} catch (error) {
+			fotoInformeApuesta = null;
+		}
+	});
 }
 
 document.getElementById("botonMenu").addEventListener("click", (evento) => {
@@ -585,6 +751,11 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 			ocultarListadoContenedor();
 		}
 
+		descargarInformeApuestaHtml({
+			tipoApuesta: "semanal",
+			importeCentimos: cantidadApostada
+		});
+
 		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta semanal rexistrada correctamente.";
 	} else if (boteAfectado === "extraordinaria") {
 		let cantidadApostada = Math.round(importeNum * 100);
@@ -593,6 +764,12 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 		renderizarTotales();
 		guardarEstado();
 		ocultarListadoContenedor();
+
+		descargarInformeApuestaHtml({
+			tipoApuesta: "extraordinaria",
+			importeCentimos: cantidadApostada
+		});
+
 		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta extraordinaria rexistrada correctamente.";
 	}
 });
@@ -849,7 +1026,7 @@ document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) 
 	let importeNum = Number(importeLimpio);
 
 	if (importeLimpio === "" || Number.isNaN(importeNum) || importeNum <= 0) {
-		mensajeSaldo.innerHTML = "El importe no es correcto.";
+		if (mensajeSaldo) mensajeSaldo.innerHTML = "El importe no es correcto.";
 		return;
 	}
 
@@ -871,5 +1048,5 @@ document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) 
 	let formRecarga = document.getElementById("recargaSaldo");
 	if (formRecarga) formRecarga.setAttribute("hidden", "");
 	actualizarVisibilidadListadoSegunPaneles();
-	mensajeSaldo.innerHTML = "Saldo engadido correctamente.";
+	if (mensajeSaldo) mensajeSaldo.innerHTML = "Saldo engadido correctamente.";
 });
