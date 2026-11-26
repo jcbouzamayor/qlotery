@@ -1,4 +1,4 @@
-let STORAGE_KEY = 'pena_lotera_v2.6';
+let STORAGE_KEY = 'pena_lotera_v3.1';
 let vistaActual = "morosos";
 let mostrarTodosMovimientos = false;
 let fotoInformeApuesta = null;
@@ -28,7 +28,6 @@ let estado = {
 const VISTAS_CON_LISTADO = [
 	"participantes",
 	"morosos",
-	"futurosMorosos",
 	"movimientos",
 	"premios"
 ];
@@ -216,18 +215,7 @@ function renderizarListado() {
 			}
 			break;
 		}
-		case "futurosMorosos": {
-			for (let i = 0; i < estado.participantes.length; i++) {
-				let p = estado.participantes[i];
-				if (p.saldo === 0 && p.activo) {
-					let li = document.createElement("li");
-					li.dataset.id = p.id;
-					li.textContent = p.nombre + " => " + formatearEuros(p.saldo);
-					listado.appendChild(li);
-				}
-			}
-			break;
-		}
+
 		case "movimientos": {
 			if (estado.movimientos.length === 0) {
 				let li = document.createElement("li");
@@ -675,10 +663,6 @@ document.getElementById("mostrarMorosos").addEventListener("click", () => {
 	cerrarFormulariosYMostrarVista("morosos");
 });
 
-document.getElementById("mostrarFuturosMorosos").addEventListener("click", () => {
-	cerrarFormulariosYMostrarVista("futurosMorosos");
-});
-
 document.getElementById("mostrarMovimientos").addEventListener("click", () => {
 	cerrarFormulariosYMostrarVista("movimientos");
 });
@@ -795,7 +779,6 @@ document.getElementById("novoPremio").addEventListener("submit", (evento) => {
 	registrarMovimientos(formatearEuros(premioCentimos), "Premios", "Suma Bote Premios", comentarioPremio);
 	renderizarTotales();
 	renderizarListado();
-	ocultarListadoContenedor();
 	guardarEstado();
 });
 
