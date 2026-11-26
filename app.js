@@ -20,7 +20,7 @@ let estado = {
 		{ id: 13, nombre: "Martin Lopez", saldo: 100, activo: true },
 		{ id: 14, nombre: "Andres Castro", saldo: 1500, activo: true }
 	],
-	botePremios: 17576,
+	botePremios: 17676,
 	apuestaSemanal: 1400,
 	movimientos: []
 };
