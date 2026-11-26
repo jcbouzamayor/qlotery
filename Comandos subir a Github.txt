@@ -1,0 +1,5 @@
+
+git status
+git add .
+git commit -m "v2.3: limpeza de menu duplicado e axustes finais"
+git push

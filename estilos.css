@@ -1,4 +1,3 @@
-
 :root {
 	--azul-loteria-oscuro: #003a70;
 	--azul-loteria: #0055a5;
@@ -15,7 +14,9 @@
 	--radio: 14px;
 }
 
-* {
+*,
+*::before,
+*::after {
 	box-sizing: border-box;
 	-webkit-tap-highlight-color: transparent;
 }
@@ -42,7 +43,7 @@ body {
 	margin: 0 auto;
 }
 
-/* Encabezado superior con hamburguesa a la izquierda y QLotery */
+/* Encabezado superior con hamburguesa a la izquierda, QLotery y engranaje a la derecha */
 .cabecera-app {
 	display: flex;
 	align-items: center;
@@ -69,6 +70,7 @@ body {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex-shrink: 0;
 }
 
 #botonMenu:hover {
@@ -79,13 +81,49 @@ body {
 .titulo-app {
 	margin: 0;
 	flex: 1;
+	min-width: 0;
 	font-family: "Fraunces", Georgia, serif;
-	font-size: 1.55rem;
+	font-size: 1.85rem;
 	font-weight: 800;
 	font-variation-settings: "SOFT" 80, "WONK" 1;
 	letter-spacing: -0.01em;
-	color: #ffffff;
+	color: #ffd166;
 	text-shadow: 0 2px 6px rgba(0, 20, 45, 0.4);
+}
+
+/* Engranaje limpio a la derecha sin estilo de botón */
+.cabecera-app #botonAjustes {
+	width: 40px;
+	min-width: 40px;
+	height: 40px;
+	min-height: 40px;
+	padding: 0;
+	margin-left: auto;
+	background: none;
+	background-color: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: 0;
+	color: #ffffff;
+	font-size: 1.45rem;
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	cursor: pointer;
+	transition: transform 0.2s ease, opacity 0.15s ease;
+}
+
+.cabecera-app #botonAjustes:hover {
+	background: none;
+	background-color: transparent;
+	opacity: 0.85;
+	transform: rotate(35deg);
+}
+
+.cabecera-app #botonAjustes:active {
+	transform: rotate(35deg) scale(0.92);
 }
 
 /* Menú desplegable de tres rayas */
@@ -116,30 +154,16 @@ body {
 	color: var(--acento-amable-oscuro);
 }
 
-/* Los 3 últimos botones (Engadir, Editar, Axustes) destacados y ordenados */
+/* Botones de gestión de participantes destacados */
 #nuevoParticipante,
-#editarParticipante,
-#botonAjustes {
+#editarParticipante {
 	background-color: #ffffff;
 	border-style: dashed;
-}
-
-#botonAjustes {
-	grid-column: span 2;
-	text-align: center;
-	background-color: var(--acento-amable-suave);
-	border-style: solid;
-	border-color: var(--acento-amable);
-	color: var(--acento-amable-oscuro);
 }
 
 @media (min-width: 500px) {
 	.menu-lateral {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-
-	#botonAjustes {
-		grid-column: auto;
 	}
 }
 
@@ -355,8 +379,7 @@ label {
 	font-size: 0.9rem;
 }
 
-input[type="text"],
-input[type="file"] {
+input[type="text"] {
 	width: 100%;
 	min-height: 44px;
 	padding: 9px 12px;
@@ -437,106 +460,4 @@ input[type="radio"] {
 }
 
 #listadoEdicionParticipantes li label {
-	margin: 0;
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	font-size: 0.82rem;
-	white-space: nowrap;
-}
-
-#listadoEdicionParticipantes li input[type="checkbox"] {
-	width: 16px;
-	height: 16px;
-	margin: 0;
-}
-
-@media (max-width: 380px) {
-	button {
-		font-size: 0.84rem;
-		padding: 8px 6px;
-	}
-
-	.valor-bote {
-		font-size: 1.15rem;
-	}
-}
-
-@media (max-width: 350px) {
-	#listadoEdicionParticipantes li {
-		grid-template-columns: minmax(0, 1fr) 68px auto;
-		gap: 4px;
-		padding: 6px;
-	}
-}
-
-select {
-	width: 100%;
-	min-height: 44px;
-	padding: 9px 36px 9px 12px;
-	border-radius: 10px;
-	border: 1.5px solid var(--borde-suave);
-	background-color: #ffffff;
-	color: var(--texto-principal);
-	font-size: 1rem;
-	font-family: inherit;
-	cursor: pointer;
-	appearance: none;
-	-webkit-appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23003a70' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 12px center;
-	background-size: 16px;
-}
-
-select:focus {
-	outline: none;
-	border-color: var(--acento-amable);
-	box-shadow: 0 0 0 3px rgba(42, 140, 106, 0.2);
-}
-
-select:hover {
-	border-color: var(--azul-loteria-claro);
-}
-
-#recargaSaldo p {
-	margin: 0 0 10px 0;
-}
-
-#recargaSaldo label[for="recarga"] {
-	margin-top: 10px;
-}
-
-#recargaSaldo button[type="submit"] {
-	margin-bottom: 8px;
-}
-
-input[type="file"] {
-	width: 100%;
-	min-height: 44px;
-	padding: 6px 10px;
-	border-radius: 10px;
-	border: 1.5px solid var(--borde-suave);
-	background-color: #ffffff;
-	color: var(--texto-principal);
-	font-size: 0.92rem;
-	font-family: inherit;
-}
-
-input[type="file"]::file-selector-button {
-	margin-right: 10px;
-	padding: 8px 14px;
-	border-radius: 9px;
-	border: none;
-	background-color: var(--azul-loteria);
-	color: #ffffff;
-	font-family: inherit;
-	font-size: 0.88rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: background-color 0.15s ease;
-}
-
-input[type="file"]::file-selector-button:hover {
-	background-color: var(--azul-loteria-oscuro);
-}
+	margin:
