@@ -1,5 +1,5 @@
 
 git status
 git add .
-git commit -m "v2.3: limpeza de menu duplicado e axustes finais"
+git commit -m "v2.6: limpeza de menu duplicado e axustes finais"
 git push

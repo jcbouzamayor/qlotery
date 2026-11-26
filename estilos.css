@@ -468,4 +468,102 @@ input[type="radio"] {
 }
 
 #listadoEdicionParticipantes li label {
-	margin:
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.82rem;
+	white-space: nowrap;
+}
+	
+input[type="file"] {
+	width: 100%;
+	min-height: 44px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	border: 1.5px solid var(--borde-suave);
+	background-color: #ffffff;
+	color: var(--texto-principal);
+	font-size: 0.92rem;
+	font-family: inherit;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+input[type="file"]::file-selector-button {
+	margin-right: 10px;
+	padding: 8px 14px;
+	border-radius: 9px;
+	border: none;
+	background-color: var(--azul-loteria);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: 0.88rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+	background-color: var(--azul-loteria-oscuro);
+}
+
+#recargaSaldo #inputRecarga {
+	margin-bottom: 12px;
+}
+
+#recargaSaldo #botonRecargaSaldo {
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+#panelAjustes #inputApuestaSemanal {
+	margin-bottom: 12px;
+}
+
+#panelAjustes #guardarApuestaSemanal {
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+
+#panelAjustes #resetApuestaSemanal {
+	margin-bottom: 4px;
+}
+
+#panelAjustes #exportarJson {
+	margin-bottom: 12px;
+}
+
+#panelAjustes label[for="inputImportarJson"] {
+	display: block;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+#panelAjustes fieldset:last-of-type {
+	background-color: #e4effa;
+	border: 1.5px solid #9ec2e6;
+	border-left: 4px solid var(--azul-loteria);
+	margin-top: 12px;
+}
+
+#panelAjustes #exportarJson {
+	background-color: var(--azul-loteria);
+	color: #ffffff;
+	margin-bottom: 12px;
+}
+
+#panelAjustes #exportarJson:hover {
+	background-color: var(--azul-loteria-oscuro);
+}
+
+#panelAjustes fieldset:last-of-type > div {
+	padding-top: 10px;
+	border-top: 1px dashed #b5d0eb;
+}
+
+#panelAjustes label[for="inputImportarJson"] {
+	display: block;
+	font-weight: 700;
+	color: var(--azul-loteria-oscuro);
+	margin-top: 0;
+	margin-bottom: 6px;
+}
