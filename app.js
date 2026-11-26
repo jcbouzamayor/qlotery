@@ -1,4 +1,4 @@
-let STORAGE_KEY = 'pena_lotera_v2.5';
+let STORAGE_KEY = 'pena_lotera_v2.6';
 let vistaActual = "morosos";
 let mostrarTodosMovimientos = false;
 let fotoInformeApuesta = null;
