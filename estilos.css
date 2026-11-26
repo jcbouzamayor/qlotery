@@ -83,12 +83,20 @@ body {
 	flex: 1;
 	min-width: 0;
 	font-family: "Fraunces", Georgia, serif;
-	font-size: 1.85rem;
+	font-size: 1.95rem;
 	font-weight: 800;
 	font-variation-settings: "SOFT" 80, "WONK" 1;
-	letter-spacing: -0.01em;
-	color: #ffd166;
-	text-shadow: 0 2px 6px rgba(0, 20, 45, 0.4);
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: #f7c948;
+	text-shadow: 0 2px 6px rgba(0, 20, 45, 0.55);
+}
+
+.cabecera-app #botonAjustes {
+	color: #f7c948;
 }
 
 /* Engranaje limpio a la derecha sin estilo de botón */
