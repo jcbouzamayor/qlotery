@@ -95,10 +95,6 @@ body {
 	text-shadow: 0 2px 6px rgba(0, 20, 45, 0.55);
 }
 
-.cabecera-app #botonAjustes {
-	color: #f7c948;
-}
-
 /* Engranaje limpio a la derecha sin estilo de botón */
 .cabecera-app #botonAjustes {
 	width: 40px;
@@ -112,7 +108,7 @@ body {
 	border: none;
 	box-shadow: none;
 	border-radius: 0;
-	color: #ffffff;
+	color: #f7c948;
 	font-size: 1.45rem;
 	line-height: 1;
 	display: inline-flex;
@@ -134,7 +130,7 @@ body {
 	transform: rotate(35deg) scale(0.92);
 }
 
-/* Menú desplegable de tres rayas */
+/* Menú desplegable de tres rayas (listados) */
 .menu-lateral {
 	background-color: var(--superficie);
 	border-radius: var(--radio);
@@ -162,17 +158,44 @@ body {
 	color: var(--acento-amable-oscuro);
 }
 
-/* Botones de gestión de participantes destacados */
+@media (min-width: 500px) {
+	.menu-lateral {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+/* Submenú desplegable desde el engranaje de ajustes */
+.menu-ajustes {
+	background-color: var(--superficie);
+	border-radius: var(--radio);
+	padding: 10px;
+	margin-bottom: 12px;
+	box-shadow: var(--sombra-suave);
+	border: 1px solid var(--borde-suave);
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.menu-ajustes button {
+	background-color: var(--superficie-suave);
+	color: var(--azul-loteria-oscuro);
+	box-shadow: none;
+	border: 1px solid var(--borde-suave);
+	text-align: left;
+	padding: 9px 12px;
+}
+
+.menu-ajustes button:hover {
+	background-color: var(--acento-amable-suave);
+	border-color: var(--acento-amable);
+	color: var(--acento-amable-oscuro);
+}
+
 #nuevoParticipante,
 #editarParticipante {
 	background-color: #ffffff;
 	border-style: dashed;
-}
-
-@media (min-width: 500px) {
-	.menu-lateral {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
 }
 
 /* Dos tarjetas superiores para Bote total y Bote premios */
@@ -247,8 +270,7 @@ form {
 	color: var(--acento-amable-oscuro);
 }
 
-/* Acciones principales visibles: Crear aposta y Gardar premio */
-/* Crear aposta arriba a ancho completo; los otros dos botones debajo al 50% */
+/* Acciones principales visibles: Crear aposta, Gardar premio y Engadir saldo */
 .barra-acciones {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -475,97 +497,30 @@ input[type="radio"] {
 	font-size: 0.82rem;
 	white-space: nowrap;
 }
-	
-input[type="file"] {
-	width: 100%;
-	min-height: 44px;
-	padding: 6px 10px;
-	border-radius: 10px;
-	border: 1.5px solid var(--borde-suave);
-	background-color: #ffffff;
-	color: var(--texto-principal);
-	font-size: 0.92rem;
-	font-family: inherit;
-	overflow: hidden;
-	text-overflow: ellipsis;
+
+#listadoEdicionParticipantes li input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	margin: 0;
 }
 
-input[type="file"]::file-selector-button {
-	margin-right: 10px;
-	padding: 8px 14px;
-	border-radius: 9px;
-	border: none;
-	background-color: var(--azul-loteria);
-	color: #ffffff;
-	font-family: inherit;
-	font-size: 0.88rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: background-color 0.15s ease;
+@media (max-width: 380px) {
+	button {
+		font-size: 0.84rem;
+		padding: 8px 6px;
+	}
+
+	.valor-bote {
+		font-size: 1.15rem;
+	}
 }
 
-input[type="file"]::file-selector-button:hover {
-	background-color: var(--azul-loteria-oscuro);
-}
-
-#recargaSaldo #inputRecarga {
-	margin-bottom: 12px;
-}
-
-#recargaSaldo #botonRecargaSaldo {
-	margin-top: 4px;
-	margin-bottom: 8px;
-}
-#panelAjustes #inputApuestaSemanal {
-	margin-bottom: 12px;
-}
-
-#panelAjustes #guardarApuestaSemanal {
-	margin-top: 4px;
-	margin-bottom: 8px;
-}
-
-#panelAjustes #resetApuestaSemanal {
-	margin-bottom: 4px;
-}
-
-#panelAjustes #exportarJson {
-	margin-bottom: 12px;
-}
-
-#panelAjustes label[for="inputImportarJson"] {
-	display: block;
-	margin-top: 4px;
-	margin-bottom: 4px;
-}
-#panelAjustes fieldset:last-of-type {
-	background-color: #e4effa;
-	border: 1.5px solid #9ec2e6;
-	border-left: 4px solid var(--azul-loteria);
-	margin-top: 12px;
-}
-
-#panelAjustes #exportarJson {
-	background-color: var(--azul-loteria);
-	color: #ffffff;
-	margin-bottom: 12px;
-}
-
-#panelAjustes #exportarJson:hover {
-	background-color: var(--azul-loteria-oscuro);
-}
-
-#panelAjustes fieldset:last-of-type > div {
-	padding-top: 10px;
-	border-top: 1px dashed #b5d0eb;
-}
-
-#panelAjustes label[for="inputImportarJson"] {
-	display: block;
-	font-weight: 700;
-	color: var(--azul-loteria-oscuro);
-	margin-top: 0;
-	margin-bottom: 6px;
+@media (max-width: 350px) {
+	#listadoEdicionParticipantes li {
+		grid-template-columns: minmax(0, 1fr) 68px auto;
+		gap: 4px;
+		padding: 6px;
+	}
 }
 
 select,
@@ -601,4 +556,85 @@ select:focus,
 select:hover,
 #selectParticipanteSaldo:hover {
 	border-color: var(--azul-loteria-claro);
+}
+
+#recargaSaldo #inputRecarga {
+	margin-bottom: 12px;
+}
+
+#recargaSaldo #botonRecargaSaldo {
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+
+#seccionApuestaSemanal #inputApuestaSemanal {
+	margin-bottom: 12px;
+}
+
+#seccionApuestaSemanal #guardarApuestaSemanal {
+	margin-top: 4px;
+	margin-bottom: 8px;
+}
+
+#seccionBackup .bloque-backup {
+	background-color: #e4effa;
+	border: 1.5px solid #9ec2e6;
+	border-left: 4px solid var(--azul-loteria);
+}
+
+#seccionBackup #exportarJson {
+	background-color: var(--azul-loteria);
+	color: #ffffff;
+	margin-bottom: 12px;
+}
+
+#seccionBackup #exportarJson:hover {
+	background-color: var(--azul-loteria-oscuro);
+}
+
+#seccionBackup .bloque-backup > div {
+	padding-top: 10px;
+	border-top: 1px dashed #b5d0eb;
+}
+
+#seccionBackup label[for="inputImportarJson"] {
+	display: block;
+	font-weight: 700;
+	color: var(--azul-loteria-oscuro);
+	margin-top: 0;
+	margin-bottom: 6px;
+}
+
+input[type="file"] {
+	display: block;
+	width: 100%;
+	min-height: 44px;
+	margin-top: 4px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	border: 1.5px solid var(--borde-suave);
+	background-color: #ffffff;
+	color: var(--texto-principal);
+	font-size: 0.92rem;
+	font-family: inherit;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+input[type="file"]::file-selector-button {
+	margin-right: 10px;
+	padding: 8px 14px;
+	border-radius: 9px;
+	border: none;
+	background-color: var(--azul-loteria);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: 0.88rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+	background-color: var(--azul-loteria-oscuro);
 }

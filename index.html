@@ -17,17 +17,22 @@
 				&#9776;
 			</button>
 			<h1 class="titulo-app">QLotery</h1>
-			<button id="botonAjustes" type="button" aria-label="Abrir axustes" title="Axustes">&#9881;</button>
+			<button id="botonAjustes" type="button" aria-label="Abrir axustes" aria-expanded="false" aria-controls="menuAjustes" title="Axustes">&#9881;</button>
 		</header>
+
 		<nav id="menuLateral" class="menu-lateral" hidden>
 			<button id="mostrarParticipantes" type="button">Participantes</button>
 			<button id="mostrarMorosos" type="button">Morosos</button>
 			<button id="mostrarMovimientos" type="button">Movementos</button>
 			<button id="mostrarPremios" type="button">Premios</button>
-			<button id="nuevoParticipante" type="button">Engadir participante</button>
-			<button id="editarParticipante" type="button">Editar participante</button>
 		</nav>
 
+		<div id="menuAjustes" class="menu-ajustes" hidden>
+			<button id="nuevoParticipante" type="button">Engadir participante</button>
+			<button id="editarParticipante" type="button">Editar participante</button>
+			<button id="botonEditarApuestaSemanal" type="button">Editar aposta semanal</button>
+			<button id="botonCopiaSeguridad" type="button">Copia de seguridade</button>
+		</div>
 
 		<h2 id="visorTotales"></h2>
 
@@ -72,6 +77,7 @@
 				<button id="resetGuardarPremio" type="reset">Restablecer</button>
 			</fieldset>
 		</form>
+
 		<form id="recargaSaldo" hidden>
 			<fieldset>
 				<legend>Añadir saldo</legend>
@@ -92,22 +98,27 @@
 		</form>
 
 		<form id="panelAjustes" hidden>
-			<fieldset>
-				<legend>Editar aposta semanal</legend>
-				<label for="inputApuestaSemanal">Importe</label>
-				<input id="inputApuestaSemanal" type="text" inputmode="decimal" min="0" name="inputApuestaSemanal" placeholder="Importe nueva apuesta" value="0">
-				<button id="guardarApuestaSemanal" type="submit">Gardar</button>
-				<button id="resetApuestaSemanal" type="button">Restablecer</button>
-			</fieldset>
-			<fieldset>
-				<legend>Crear Back-up</legend>
-				<button id="exportarJson" type="button">Exportar .json</button>
+			<div id="seccionApuestaSemanal" hidden>
+				<fieldset>
+					<legend>Editar aposta semanal</legend>
+					<label for="inputApuestaSemanal">Importe</label>
+					<input id="inputApuestaSemanal" type="text" inputmode="decimal" min="0" name="inputApuestaSemanal" placeholder="Importe nueva apuesta" value="0">
+					<button id="guardarApuestaSemanal" type="submit">Gardar</button>
+					<button id="resetApuestaSemanal" type="button">Restablecer</button>
+				</fieldset>
+			</div>
 
-				<div>
-					<label for="inputImportarJson">Restaurar .json</label>
-					<input id="inputImportarJson" type="file" accept=".json,application/json">
-				</div>
-			</fieldset>
+			<div id="seccionBackup" hidden>
+				<fieldset class="bloque-backup">
+					<legend>Crear Back-up</legend>
+					<button id="exportarJson" type="button">Exportar .json</button>
+
+					<div>
+						<label for="inputImportarJson">Restaurar .json</label>
+						<input id="inputImportarJson" type="file" accept=".json,application/json">
+					</div>
+				</fieldset>
+			</div>
 		</form>
 
 		<div id="listadoDinamico">

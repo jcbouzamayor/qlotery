@@ -1,8 +1,13 @@
-let STORAGE_KEY = 'pena_lotera_v3.1';
+/* ==========================================================================
+   CONFIGURACIÓN GLOBAL Y ESTADO INICIAL DE LA APLICACIÓN
+   ========================================================================== */
+let STORAGE_KEY = 'pena_lotera_v3.3';
+let BACKUP_PREVIO_KEY = STORAGE_KEY + '_backup_previo';
 let vistaActual = "morosos";
 let mostrarTodosMovimientos = false;
 let fotoInformeApuesta = null;
 
+// Estructura principal de datos persistida en localStorage
 let estado = {
 	participantes: [
 		{ id: 1, nombre: "Rafael Lugris", saldo: 600, activo: true },
@@ -25,17 +30,16 @@ let estado = {
 	movimientos: []
 };
 
-const VISTAS_CON_LISTADO = [
-	"participantes",
-	"morosos",
-	"movimientos",
-	"premios"
-];
-
+// Agrupaciones de IDs de formularios para facilitar su ocultación en bloque
 const PANELES_SUPERIORES = ["nuevaApuesta", "novoPremio", "panelAjustes", "recargaSaldo"];
 const PANELES_PARTICIPANTES = ["formParticipante", "formEditarParticipante"];
 const TODOS_LOS_PANELES = [...PANELES_SUPERIORES, ...PANELES_PARTICIPANTES];
 
+/* ==========================================================================
+   UTILIDADES GENERALES Y ACCESIBILIDAD (ARIA / MENÚS / PANELES)
+   ========================================================================== */
+
+// Escapa caracteres especiales HTML para evitar inyecciones al generar el informe descargable
 function escaparHtml(texto) {
 	return String(texto ?? "")
 		.replace(/&/g, "&amp;")
@@ -45,17 +49,61 @@ function escaparHtml(texto) {
 		.replace(/'/g, "&#39;");
 }
 
-function cerrarMenuLateral() {
-	let menu = document.getElementById("menuLateral");
-	let botonMenu = document.getElementById("botonMenu");
-	if (menu) {
-		menu.setAttribute("hidden", "");
-	}
-	if (botonMenu) {
-		botonMenu.setAttribute("aria-expanded", "false");
+// Actualiza el atributo aria-expanded de un botón según el estado visible de su panel asociado
+function actualizarAriaExpanded(idBoton, expandido) {
+	let boton = document.getElementById(idBoton);
+	if (boton) {
+		boton.setAttribute("aria-expanded", String(Boolean(expandido)));
 	}
 }
 
+// Sincroniza los estados ARIA de los botones de menú y subpaneles de ajustes
+function sincronizarEstadosAria() {
+	let menuLateral = document.getElementById("menuLateral");
+	let menuAjustes = document.getElementById("menuAjustes");
+	let panelAjustes = document.getElementById("panelAjustes");
+	let seccionApuesta = document.getElementById("seccionApuestaSemanal");
+	let seccionBackup = document.getElementById("seccionBackup");
+
+	actualizarAriaExpanded("botonMenu", menuLateral && !menuLateral.hasAttribute("hidden"));
+	actualizarAriaExpanded("botonAjustes", menuAjustes && !menuAjustes.hasAttribute("hidden"));
+
+	let panelAbierto = panelAjustes && !panelAjustes.hasAttribute("hidden");
+	actualizarAriaExpanded(
+		"botonEditarApuestaSemanal",
+		panelAbierto && seccionApuesta && !seccionApuesta.hasAttribute("hidden")
+	);
+	actualizarAriaExpanded(
+		"botonCopiaSeguridad",
+		panelAbierto && seccionBackup && !seccionBackup.hasAttribute("hidden")
+	);
+}
+
+// Oculta el menú desplegable de listados (botón hamburguesa)
+function cerrarMenuLateral() {
+	let menu = document.getElementById("menuLateral");
+	if (menu) {
+		menu.setAttribute("hidden", "");
+	}
+	actualizarAriaExpanded("botonMenu", false);
+}
+
+// Oculta el menú desplegable de ajustes (icono engranaje)
+function cerrarMenuAjustes() {
+	let menuAjustes = document.getElementById("menuAjustes");
+	if (menuAjustes) {
+		menuAjustes.setAttribute("hidden", "");
+	}
+	actualizarAriaExpanded("botonAjustes", false);
+}
+
+// Cierra ambos menús desplegables de la cabecera
+function cerrarMenusDesplegables() {
+	cerrarMenuLateral();
+	cerrarMenuAjustes();
+}
+
+// Oculta todos los elementos cuyos IDs se pasen en el array
 function ocultarFormularios(ids) {
 	ids.forEach((id) => {
 		let el = document.getElementById(id);
@@ -63,8 +111,21 @@ function ocultarFormularios(ids) {
 			el.setAttribute("hidden", "");
 		}
 	});
+	sincronizarEstadosAria();
 }
 
+// Oculta los subpaneles internos del formulario de ajustes
+function ocultarSubpanelesAjustes() {
+	ocultarFormularios(["seccionApuestaSemanal", "seccionBackup"]);
+}
+
+// Cierra todos los formularios y subpaneles abiertos en pantalla
+function cerrarTodosLosPaneles() {
+	ocultarFormularios(TODOS_LOS_PANELES);
+	ocultarSubpanelesAjustes();
+}
+
+// Muestra el contenedor principal de listados
 function mostrarListadoContenedor() {
 	let contenedorListado = document.getElementById("listadoDinamico");
 	if (contenedorListado) {
@@ -72,6 +133,7 @@ function mostrarListadoContenedor() {
 	}
 }
 
+// Oculta el contenedor principal de listados
 function ocultarListadoContenedor() {
 	let contenedorListado = document.getElementById("listadoDinamico");
 	if (contenedorListado) {
@@ -79,6 +141,7 @@ function ocultarListadoContenedor() {
 	}
 }
 
+// Oculta el listado si hay algún formulario abierto para evitar solapamientos visuales
 function actualizarVisibilidadListadoSegunPaneles() {
 	let hayPanelAbierto = TODOS_LOS_PANELES.some((id) => {
 		let el = document.getElementById(id);
@@ -90,10 +153,31 @@ function actualizarVisibilidadListadoSegunPaneles() {
 	}
 }
 
+/* ==========================================================================
+   PERSISTENCIA EN LOCALSTORAGE Y CÁLCULOS MONETARIOS
+   ========================================================================== */
+
+// Guarda el objeto estado actual en localStorage
 function guardarEstado() {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
 }
 
+// Guarda una copia preventiva en localStorage antes de sobrescribir datos al restaurar un JSON
+function guardarRespaldoPreventivo() {
+	try {
+		localStorage.setItem(
+			BACKUP_PREVIO_KEY,
+			JSON.stringify({
+				guardadoEn: new Date().toISOString(),
+				estado: estado
+			})
+		);
+	} catch (error) {
+		// Si localStorage está lleno o bloqueado, no interrumpimos el flujo principal
+	}
+}
+
+// Recupera el estado guardado en localStorage al iniciar la aplicación
 function cargarEstado() {
 	let estadoRecuperado = localStorage.getItem(STORAGE_KEY);
 	if (estadoRecuperado) {
@@ -101,15 +185,18 @@ function cargarEstado() {
 	}
 }
 
+// Convierte un importe entero en céntimos a cadena formateada en euros (ej: 1400 -> "14.00 €")
 function formatearEuros(euros) {
 	let eurosFormateados = euros / 100;
 	return eurosFormateados.toFixed(2) + " €";
 }
 
+// Calcula el bote global sumando los saldos individuales y el bote de premios
 function calcularBoteGlobal() {
 	return calcularSaldosPersonales() + estado.botePremios;
 }
 
+// Suma los saldos actuales de todos los participantes (en céntimos)
 function calcularSaldosPersonales() {
 	let sumaSaldos = 0;
 	for (let i = 0; i < estado.participantes.length; i++) {
@@ -119,6 +206,20 @@ function calcularSaldosPersonales() {
 	return sumaSaldos;
 }
 
+// Devuelve una copia del array de participantes ordenada alfabéticamente por nombre
+function obtenerParticipantesOrdenadosAlfabetico() {
+	return [...estado.participantes].sort((a, b) =>
+		String(a.nombre ?? "").localeCompare(String(b.nombre ?? ""), "es", {
+			sensitivity: "base"
+		})
+	);
+}
+
+/* ==========================================================================
+   RENDERIZADO DE VISTAS, LISTADOS Y FORMULARIOS DINÁMICOS
+   ========================================================================== */
+
+// Dibuja las dos tarjetas superiores con el Bote total y el Bote de premios
 function renderizarTotales() {
 	let visor = document.getElementById("visorTotales");
 	if (!visor) return;
@@ -137,15 +238,18 @@ function renderizarTotales() {
 		'</div>';
 }
 
+// Genera las filas editables de participantes ordenadas alfabéticamente en el formulario de edición
 function reenderizarEdicionParticipantes() {
 	let listaEdicionParticipantes = document.getElementById("listadoEdicionParticipantes");
 	if (!listaEdicionParticipantes) {
 		return;
 	}
 
+	let participantesOrdenados = obtenerParticipantesOrdenadosAlfabetico();
+
 	listaEdicionParticipantes.innerHTML = "";
-	for (let i = 0; i < estado.participantes.length; i++) {
-		let p = estado.participantes[i];
+	for (let i = 0; i < participantesOrdenados.length; i++) {
+		let p = participantesOrdenados[i];
 		let li = document.createElement("li");
 		li.dataset.id = p.id;
 
@@ -176,6 +280,7 @@ function reenderizarEdicionParticipantes() {
 	}
 }
 
+// Renderiza el listado principal según la vista activa (participantes, morosos, movimientos o premios)
 function renderizarListado() {
 	let listado = document.getElementById("listado");
 	if (!listado) {
@@ -194,8 +299,10 @@ function renderizarListado() {
 	listado.innerHTML = "";
 	switch (vistaActual) {
 		case "participantes": {
-			for (let i = 0; i < estado.participantes.length; i++) {
-				let p = estado.participantes[i];
+			let participantesOrdenados = obtenerParticipantesOrdenadosAlfabetico();
+
+			for (let i = 0; i < participantesOrdenados.length; i++) {
+				let p = participantesOrdenados[i];
 				let li = document.createElement("li");
 				li.dataset.id = p.id;
 				li.textContent = p.nombre + " - " + formatearEuros(p.saldo) + " - " + (p.activo ? "Activo" : "Inactivo");
@@ -215,7 +322,6 @@ function renderizarListado() {
 			}
 			break;
 		}
-
 		case "movimientos": {
 			if (estado.movimientos.length === 0) {
 				let li = document.createElement("li");
@@ -272,6 +378,7 @@ function renderizarListado() {
 	}
 }
 
+// Añade un nuevo participante al estado, guarda en localStorage y refresca la interfaz
 function agregarParticipante(nombre, saldo) {
 	let nuevoParticipante = {
 		id: Date.now(),
@@ -285,15 +392,28 @@ function agregarParticipante(nombre, saldo) {
 	renderizarListado();
 }
 
+// Limpia todos los mensajes de aviso o error visibles en pantalla
 function limpiarComentarios() {
 	let mensajeApuesta = document.getElementById("mensajeApuesta");
 	let mensajeAjustes = document.getElementById("mensajeAjustes");
 	let aviso = document.getElementById("textoEditarParticipante");
-	if (mensajeApuesta) mensajeApuesta.innerHTML = "";
-	if (mensajeAjustes) mensajeAjustes.innerHTML = "";
-	if (aviso) aviso.innerHTML = "";
+	let advertencia = document.getElementById("textoAdvertencia");
+	if (mensajeApuesta) mensajeApuesta.textContent = "";
+	if (mensajeAjustes) mensajeAjustes.textContent = "";
+	if (aviso) aviso.textContent = "";
+	if (advertencia) advertencia.textContent = "";
 }
 
+// Muestra un mensaje de aviso o confirmación en el contenedor indicado limpiando avisos previos
+function mostrarFeedback(idElemento, texto) {
+	limpiarComentarios();
+	let el = document.getElementById(idElemento);
+	if (el) {
+		el.textContent = texto;
+	}
+}
+
+// Registra una nueva entrada en el historial de movimientos y guarda el estado
 function registrarMovimientos(importe, concepto, afecta, comentario) {
 	let nuevoMovimiento = {
 		id: Date.now(),
@@ -307,22 +427,35 @@ function registrarMovimientos(importe, concepto, afecta, comentario) {
 	guardarEstado();
 }
 
-function abrirAjustes() {
+// Abre o cierra un subpanel concreto dentro de #panelAjustes (apuesta semanal o copia de seguridad)
+function abrirSubpanelAjustes(idSeccion) {
 	let panel = document.getElementById("panelAjustes");
-	let inputApuesta = document.getElementById("inputApuestaSemanal");
-	let aviso = document.getElementById("mensajeAjustes");
-	if (!panel) return;
+	let seccion = document.getElementById(idSeccion);
+	if (!panel || !seccion) return;
 
-	panel.toggleAttribute("hidden");
-	if (!panel.hasAttribute("hidden")) {
-		if (aviso) aviso.textContent = "";
-		if (inputApuesta) {
-			inputApuesta.value = (estado.apuestaSemanal / 100).toFixed(2);
-			inputApuesta.focus();
+	let yaEstabaVisible = !panel.hasAttribute("hidden") && !seccion.hasAttribute("hidden");
+	ocultarSubpanelesAjustes();
+
+	if (yaEstabaVisible) {
+		panel.setAttribute("hidden", "");
+	} else {
+		panel.removeAttribute("hidden");
+		seccion.removeAttribute("hidden");
+
+		if (idSeccion === "seccionApuestaSemanal") {
+			let inputApuesta = document.getElementById("inputApuestaSemanal");
+			if (inputApuesta) {
+				inputApuesta.value = (estado.apuestaSemanal / 100).toFixed(2);
+				inputApuesta.focus();
+			}
 		}
 	}
+
+	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 }
 
+// Rellena el desplegable de recarga de saldo ordenando a los participantes de menor a mayor saldo
 function rellenarSelectParticipantesSaldo() {
 	let selectParticipanteSaldo = document.getElementById("selectParticipanteSaldo");
 	if (!selectParticipanteSaldo) return;
@@ -344,6 +477,11 @@ function rellenarSelectParticipantesSaldo() {
 	}
 }
 
+/* ==========================================================================
+   GESTIÓN DE IMÁGENES Y GENERACIÓN DEL INFORME HTML DE APUESTA
+   ========================================================================== */
+
+// Redimensiona y comprime la imagen seleccionada del resguardo para incrustarla en el informe HTML
 function prepararFotoDesdeArchivo(archivo) {
 	return new Promise((resolve, reject) => {
 		let lector = new FileReader();
@@ -374,6 +512,17 @@ function prepararFotoDesdeArchivo(archivo) {
 	});
 }
 
+// Comprueba si hay imagen adjunta y pide confirmación al usuario si no existe
+function confirmarApuestaSinFoto() {
+	if (fotoInformeApuesta) {
+		return true;
+	}
+	return window.confirm(
+		"Non se adxuntou ningunha imaxe. Crear a aposta igualmente?"
+	);
+}
+
+// Genera y descarga un archivo HTML autocontenido con el resumen de la apuesta, morosos, saldos y foto
 function descargarInformeApuestaHtml({ tipoApuesta, importeCentimos }) {
 	let fechaTexto = new Date().toLocaleString("es-ES");
 	let fechaArchivo = new Date().toISOString().slice(0, 10);
@@ -383,7 +532,7 @@ function descargarInformeApuestaHtml({ tipoApuesta, importeCentimos }) {
 
 	let filasMorosos =
 		morosos.length === 0
-			? '<p class="sin-datos">Non hai morosos tras esta aposta.</p>'
+			? '<p class="sin-datos">Non hai morosos esta semana.</p>'
 			: '<ul class="lista-informe">' +
 				morosos
 					.map(
@@ -478,6 +627,11 @@ function descargarInformeApuestaHtml({ tipoApuesta, importeCentimos }) {
 	URL.revokeObjectURL(url);
 }
 
+/* ==========================================================================
+   EVENTOS DE NAVEGACIÓN, MENÚS Y SUBPANELES DE AJUSTES
+   ========================================================================== */
+
+// Procesa la foto del resguardo cuando el usuario selecciona una imagen
 let inputFotoEl = document.getElementById("inputFotoApuesta");
 if (inputFotoEl) {
 	inputFotoEl.addEventListener("change", async (evento) => {
@@ -490,40 +644,74 @@ if (inputFotoEl) {
 			fotoInformeApuesta = await prepararFotoDesdeArchivo(archivo);
 		} catch (error) {
 			fotoInformeApuesta = null;
+			mostrarFeedback("mensajeApuesta", "Non se puido cargar a imaxe do resgardo.");
 		}
 	});
 }
 
+// Alterna el menú lateral de listados (botón hamburguesa)
 document.getElementById("botonMenu").addEventListener("click", (evento) => {
 	evento.preventDefault();
 	let menu = document.getElementById("menuLateral");
-	let botonMenu = document.getElementById("botonMenu");
 	if (!menu) return;
 
+	limpiarComentarios();
+	cerrarMenuAjustes();
 	menu.toggleAttribute("hidden");
-	if (botonMenu) {
-		botonMenu.setAttribute("aria-expanded", String(!menu.hasAttribute("hidden")));
-	}
+	sincronizarEstadosAria();
 });
 
+// Alterna el menú desplegable de ajustes (icono engranaje)
+document.getElementById("botonAjustes").addEventListener("click", (evento) => {
+	evento.preventDefault();
+	let menuAjustes = document.getElementById("menuAjustes");
+	if (!menuAjustes) return;
+
+	limpiarComentarios();
+	cerrarMenuLateral();
+	menuAjustes.toggleAttribute("hidden");
+	sincronizarEstadosAria();
+});
+
+// Cierra menús, paneles y avisos al pulsar la tecla Escape
 document.addEventListener("keydown", (evento) => {
 	if (evento.key === "Escape") {
-		cerrarMenuLateral();
+		cerrarMenusDesplegables();
+		cerrarTodosLosPaneles();
+		limpiarComentarios();
 	}
 });
 
+// Abre el subpanel para editar el importe de la apuesta semanal
+document.getElementById("botonEditarApuestaSemanal").addEventListener("click", (evento) => {
+	evento.preventDefault();
+	cerrarMenusDesplegables();
+	limpiarComentarios();
+	ocultarFormularios(["nuevaApuesta", "novoPremio", "recargaSaldo", ...PANELES_PARTICIPANTES]);
+	abrirSubpanelAjustes("seccionApuestaSemanal");
+});
+
+// Abre el subpanel de exportación e importación de copias de seguridad (.json)
+document.getElementById("botonCopiaSeguridad").addEventListener("click", (evento) => {
+	evento.preventDefault();
+	cerrarMenusDesplegables();
+	limpiarComentarios();
+	ocultarFormularios(["nuevaApuesta", "novoPremio", "recargaSaldo", ...PANELES_PARTICIPANTES]);
+	abrirSubpanelAjustes("seccionBackup");
+});
+
+// Guarda el nuevo importe por defecto de la apuesta semanal
 document.getElementById("guardarApuestaSemanal").addEventListener("click", (evento) => {
 	evento.preventDefault();
 	let inputApuesta = document.getElementById("inputApuestaSemanal");
 	let inputImporteApuesta = document.getElementById("importeApuesta");
-	let aviso = document.getElementById("mensajeAjustes");
 	if (!inputApuesta) return;
 
 	let limpia = inputApuesta.value.trim().replace(",", ".");
 	let num = Number(limpia);
 
 	if (limpia === "" || isNaN(num) || num <= 0) {
-		if (aviso) aviso.textContent = "A aposta semanal non é correcta.";
+		mostrarFeedback("mensajeAjustes", "A aposta semanal non é correcta.");
 		return;
 	}
 
@@ -533,30 +721,38 @@ document.getElementById("guardarApuestaSemanal").addEventListener("click", (even
 	}
 	guardarEstado();
 	renderizarTotales();
-	if (aviso) aviso.textContent = "Aposta semanal actualizada.";
+	mostrarFeedback("mensajeAjustes", "Aposta semanal actualizada.");
 });
 
+/* ==========================================================================
+   ARRANQUE INICIAL DE LA APLICACIÓN
+   ========================================================================== */
 cargarEstado();
 renderizarTotales();
 ocultarListadoContenedor();
+sincronizarEstadosAria();
 
+/* ==========================================================================
+   EVENTOS DE PARTICIPANTES (ALTA, EDICIÓN Y CONSULTA)
+   ========================================================================== */
+
+// Valida y da de alta un nuevo participante desde #formParticipante
 document.getElementById("formParticipante").addEventListener("submit", (evento) => {
 	evento.preventDefault();
 
-	let aviso = document.getElementById("textoAdvertencia");
 	let usuarioLimpio = document.getElementById("nuevoUsuario").value.trim();
 	let saldoLimpio = document.getElementById("nuevoSaldo").value.trim().replace(",", ".");
 	let saldoNumerico = 0;
 
 	if (usuarioLimpio === "") {
-		aviso.textContent = "O nome non pode estar baleiro.";
+		mostrarFeedback("textoAdvertencia", "O nome non pode estar baleiro.");
 		return;
 	}
 
 	if (saldoLimpio !== "") {
 		saldoNumerico = Number(saldoLimpio);
 		if (isNaN(saldoNumerico) || saldoNumerico < 0) {
-			aviso.textContent = "O saldo inicial no é correcto.";
+			mostrarFeedback("textoAdvertencia", "O saldo inicial no é correcto.");
 			return;
 		}
 	}
@@ -573,20 +769,21 @@ document.getElementById("formParticipante").addEventListener("submit", (evento) 
 		);
 	}
 
-	aviso.textContent = "";
 	document.getElementById("formParticipante").reset();
 	document.getElementById("formParticipante").setAttribute("hidden", "");
 	vistaActual = "participantes";
 	renderizarListado();
 	ocultarListadoContenedor();
-	let avisoEdicion = document.getElementById("textoEditarParticipante");
-	if (avisoEdicion) avisoEdicion.innerHTML = "Participante gardado correctamente.";
+	sincronizarEstadosAria();
+	mostrarFeedback("textoEditarParticipante", "Participante gardado correctamente.");
 });
 
+// Abre o cierra el formulario de nueva apuesta
 document.getElementById("crearApuesta").addEventListener("click", (evento) => {
 	evento.preventDefault();
-	cerrarMenuLateral();
+	cerrarMenusDesplegables();
 	limpiarComentarios();
+	ocultarSubpanelesAjustes();
 	ocultarFormularios(["novoPremio", "panelAjustes", "recargaSaldo", ...PANELES_PARTICIPANTES]);
 
 	let formularioApuesta = document.getElementById("nuevaApuesta");
@@ -595,12 +792,15 @@ document.getElementById("crearApuesta").addEventListener("click", (evento) => {
 		document.getElementById("importeApuesta").focus();
 	}
 	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 });
 
+// Abre o cierra el formulario de guardar premio
 document.getElementById("guardarPremio").addEventListener("click", (evento) => {
 	evento.preventDefault();
-	cerrarMenuLateral();
+	cerrarMenusDesplegables();
 	limpiarComentarios();
+	ocultarSubpanelesAjustes();
 	ocultarFormularios(["nuevaApuesta", "panelAjustes", "recargaSaldo", ...PANELES_PARTICIPANTES]);
 
 	let formularioPremio = document.getElementById("novoPremio");
@@ -609,20 +809,14 @@ document.getElementById("guardarPremio").addEventListener("click", (evento) => {
 		document.getElementById("importePremio").focus();
 	}
 	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 });
 
-document.getElementById("botonAjustes").addEventListener("click", (evento) => {
-	evento.preventDefault();
-	cerrarMenuLateral();
-	limpiarComentarios();
-	ocultarFormularios(["nuevaApuesta", "novoPremio", "recargaSaldo", ...PANELES_PARTICIPANTES]);
-	abrirAjustes();
-	actualizarVisibilidadListadoSegunPaneles();
-});
-
+// Abre o cierra el formulario para añadir un participante
 document.getElementById("nuevoParticipante").addEventListener("click", () => {
-	cerrarMenuLateral();
+	cerrarMenusDesplegables();
 	limpiarComentarios();
+	ocultarSubpanelesAjustes();
 	ocultarFormularios([...PANELES_SUPERIORES, "formEditarParticipante"]);
 
 	let formularioNuevoParticipante = document.getElementById("formParticipante");
@@ -631,11 +825,14 @@ document.getElementById("nuevoParticipante").addEventListener("click", () => {
 		document.getElementById("nuevoUsuario").focus();
 	}
 	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 });
 
+// Abre o cierra el formulario de edición masiva de participantes
 document.getElementById("editarParticipante").addEventListener("click", () => {
-	cerrarMenuLateral();
+	cerrarMenusDesplegables();
 	limpiarComentarios();
+	ocultarSubpanelesAjustes();
 	ocultarFormularios([...PANELES_SUPERIORES, "formParticipante"]);
 
 	let formularioEdicionParticipante = document.getElementById("formEditarParticipante");
@@ -644,17 +841,20 @@ document.getElementById("editarParticipante").addEventListener("click", () => {
 		reenderizarEdicionParticipantes();
 	}
 	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 });
 
+// Cierra cualquier formulario abierto y muestra el listado correspondiente a la vista elegida
 function cerrarFormulariosYMostrarVista(nuevaVista) {
-	cerrarMenuLateral();
-	ocultarFormularios(TODOS_LOS_PANELES);
+	cerrarMenusDesplegables();
+	cerrarTodosLosPaneles();
+	limpiarComentarios();
 	vistaActual = nuevaVista;
 	renderizarListado();
 	mostrarListadoContenedor();
-	limpiarComentarios();
 }
 
+// Botones del menú lateral para cambiar entre los distintos listados
 document.getElementById("mostrarParticipantes").addEventListener("click", () => {
 	cerrarFormulariosYMostrarVista("participantes");
 });
@@ -671,13 +871,17 @@ document.getElementById("mostrarPremios").addEventListener("click", () => {
 	cerrarFormulariosYMostrarVista("premios");
 });
 
+/* ==========================================================================
+   PROCESAMIENTO DE APUESTAS, PREMIOS, EDICIÓN DE PARTICIPANTES Y SALDOS
+   ========================================================================== */
+
+// Valida, pide confirmación (incluyendo aviso si falta foto) y registra una apuesta
 document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 	evento.preventDefault();
 	limpiarComentarios();
 
 	let contadorActivos = 0;
 	let apuestaIndividual = 0;
-	let mensajeApuesta = document.getElementById("mensajeApuesta");
 	let cadenaCantidadApostada = document.getElementById("importeApuesta").value;
 	let cadenaLimpia = cadenaCantidadApostada.trim().replace(",", ".");
 	let radioSeleccionado = document.querySelector('input[name="tipoApuesta"]:checked');
@@ -690,12 +894,12 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 	}
 
 	if (cadenaLimpia === "" || isNaN(importeNum) || importeNum <= 0) {
-		if (mensajeApuesta) mensajeApuesta.innerHTML = "El importe no es correcto.";
+		mostrarFeedback("mensajeApuesta", "El importe no es correcto.");
 		return;
 	}
 
 	if (!radioSeleccionado) {
-		if (mensajeApuesta) mensajeApuesta.innerHTML = "Selecciona o tipo de aposta.";
+		mostrarFeedback("mensajeApuesta", "Selecciona o tipo de aposta.");
 		return;
 	}
 
@@ -703,13 +907,31 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 
 	if (boteAfectado === "semanal") {
 		if (contadorActivos === 0) {
-			if (mensajeApuesta) mensajeApuesta.innerHTML = "Non hai participantes activos.";
+			mostrarFeedback("mensajeApuesta", "Non hai participantes activos.");
+			return;
+		}
+
+		if (!confirmarApuestaSinFoto()) {
+			mostrarFeedback("mensajeApuesta", "Aposta semanal cancelada por falta de imaxe.");
+			return;
+		}
+
+		let cantidadApostada = Math.round(importeNum * 100);
+		apuestaIndividual = Math.ceil(cantidadApostada / contadorActivos);
+
+		let confirmado = window.confirm(
+			"Confirmar aposta semanal de " +
+				formatearEuros(cantidadApostada) +
+				" (" +
+				formatearEuros(apuestaIndividual) +
+				" por participante activo)?"
+		);
+		if (!confirmado) {
+			mostrarFeedback("mensajeApuesta", "Aposta semanal cancelada.");
 			return;
 		}
 
 		let contadorMorosos = 0;
-		let cantidadApostada = Math.round(importeNum * 100);
-		apuestaIndividual = Math.ceil(cantidadApostada / contadorActivos);
 
 		for (let i = 0; i < estado.participantes.length; i++) {
 			if (estado.participantes[i].activo) {
@@ -740,9 +962,34 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 			importeCentimos: cantidadApostada
 		});
 
-		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta semanal rexistrada correctamente.";
+		let formularioApuesta = document.getElementById("nuevaApuesta");
+		if (formularioApuesta) {
+			formularioApuesta.reset();
+			formularioApuesta.setAttribute("hidden", "");
+		}
+		fotoInformeApuesta = null;
+		actualizarVisibilidadListadoSegunPaneles();
+		sincronizarEstadosAria();
+
+		mostrarFeedback("mensajeApuesta", "Aposta semanal rexistrada correctamente.");
 	} else if (boteAfectado === "extraordinaria") {
+		if (!confirmarApuestaSinFoto()) {
+			mostrarFeedback("mensajeApuesta", "Aposta extraordinaria cancelada por falta de imaxe.");
+			return;
+		}
+
 		let cantidadApostada = Math.round(importeNum * 100);
+
+		let confirmado = window.confirm(
+			"Confirmar aposta extraordinaria de " +
+				formatearEuros(cantidadApostada) +
+				" con cargo ao Bote de Premios?"
+		);
+		if (!confirmado) {
+			mostrarFeedback("mensajeApuesta", "Aposta extraordinaria cancelada.");
+			return;
+		}
+
 		estado.botePremios = estado.botePremios - cantidadApostada;
 		registrarMovimientos(formatearEuros(cantidadApostada), "Aposta extraordinaria", "Desconta Bote Premios", "");
 		renderizarTotales();
@@ -754,38 +1001,57 @@ document.getElementById("nuevaApuesta").addEventListener("submit", (evento) => {
 			importeCentimos: cantidadApostada
 		});
 
-		if (mensajeApuesta) mensajeApuesta.innerHTML = "Aposta extraordinaria rexistrada correctamente.";
+		let formularioApuesta = document.getElementById("nuevaApuesta");
+		if (formularioApuesta) {
+			formularioApuesta.reset();
+			formularioApuesta.setAttribute("hidden", "");
+		}
+		fotoInformeApuesta = null;
+		actualizarVisibilidadListadoSegunPaneles();
+		sincronizarEstadosAria();
+
+		mostrarFeedback("mensajeApuesta", "Aposta extraordinaria rexistrada correctamente.");
 	}
 });
 
+// Valida y suma un premio al bote de premios registrando el movimiento
 document.getElementById("novoPremio").addEventListener("submit", (evento) => {
 	evento.preventDefault();
 	limpiarComentarios();
-	let mensajePremio = document.getElementById("mensajeApuesta");
 	let comentarioPremio = document.getElementById("comentarioPremio").value;
 	let cadenaNumericaPremio = document.getElementById("importePremio").value;
 	let cadenaLimpia = cadenaNumericaPremio.trim().replace(",", ".");
 
 	if (cadenaLimpia === "" || isNaN(cadenaLimpia) || cadenaLimpia <= 0) {
-		mensajePremio.innerHTML = "El importe no es correcto.";
+		mostrarFeedback("mensajeApuesta", "El importe no es correcto.");
 		return;
 	}
 
 	let premio = Number(cadenaLimpia);
 	let premioCentimos = Math.round(premio * 100);
 	estado.botePremios += premioCentimos;
-	mensajePremio.innerHTML = "Premio gardado correctamente.";
 	vistaActual = "premios";
 	registrarMovimientos(formatearEuros(premioCentimos), "Premios", "Suma Bote Premios", comentarioPremio);
 	renderizarTotales();
 	renderizarListado();
+	ocultarListadoContenedor();
 	guardarEstado();
+
+	let formularioPremio = document.getElementById("novoPremio");
+	if (formularioPremio) {
+		formularioPremio.reset();
+		formularioPremio.setAttribute("hidden", "");
+	}
+	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
+
+	mostrarFeedback("mensajeApuesta", "Premio gardado correctamente.");
 });
 
+// Valida y guarda los cambios de nombre, saldo y estado activo de todos los participantes editados
 document.getElementById("enviarEdicionParticipante").addEventListener("click", (evento) => {
 	evento.preventDefault();
 	limpiarComentarios();
-	let aviso = document.getElementById("textoEditarParticipante");
 	let filas = document.querySelectorAll("#listadoEdicionParticipantes li");
 	let cambiosPreparados = [];
 
@@ -802,12 +1068,12 @@ document.getElementById("enviarEdicionParticipante").addEventListener("click", (
 		let saldoNum = Number(saldoTexto);
 
 		if (nombre === "") {
-			if (aviso) aviso.textContent = "Hai algún participante co nome baleiro.";
+			mostrarFeedback("textoEditarParticipante", "Hai algún participante co nome baleiro.");
 			return;
 		}
 
 		if (saldoTexto === "" || isNaN(saldoNum)) {
-			if (aviso) aviso.textContent = "Hai algún saldo con formato incorrecto.";
+			mostrarFeedback("textoEditarParticipante", "Hai algún saldo con formato incorrecto.");
 			return;
 		}
 
@@ -871,12 +1137,17 @@ document.getElementById("enviarEdicionParticipante").addEventListener("click", (
 	vistaActual = "participantes";
 	renderizarListado();
 	ocultarListadoContenedor();
-
-	if (aviso) aviso.textContent = "Cambios gardados correctamente.";
+	sincronizarEstadosAria();
+	mostrarFeedback("textoEditarParticipante", "Cambios gardados correctamente.");
 });
 
+/* ==========================================================================
+   COPIAS DE SEGURIDAD (.JSON) Y EXPORTACIÓN DE MOVIMIENTOS (.TXT)
+   ========================================================================== */
+
+// Importa y restaura una copia de seguridad JSON previa confirmación y respaldo preventivo
 document.getElementById("inputImportarJson").addEventListener("change", (evento) => {
-	let aviso = document.getElementById("mensajeAjustes");
+	limpiarComentarios();
 	let archivo = evento.target.files && evento.target.files[0];
 	if (!archivo) return;
 
@@ -893,10 +1164,19 @@ document.getElementById("inputImportarJson").addEventListener("change", (evento)
 				Array.isArray(datos.movimientos);
 
 			if (!estructuraValida) {
-				if (aviso) aviso.textContent = "O ficheiro JSON non ten un formato válido para QLotery.";
+				mostrarFeedback("mensajeAjustes", "O ficheiro JSON non ten un formato válido para QLotery.");
 				return;
 			}
 
+			let confirmado = window.confirm(
+				"Restaurar este respaldo sobrescribirá os datos actuais. Gardarase unha copia preventiva previa en localStorage. Continuar?"
+			);
+			if (!confirmado) {
+				mostrarFeedback("mensajeAjustes", "Restauración cancelada.");
+				return;
+			}
+
+			guardarRespaldoPreventivo();
 			estado = datos;
 			guardarEstado();
 			renderizarTotales();
@@ -907,9 +1187,9 @@ document.getElementById("inputImportarJson").addEventListener("change", (evento)
 			if (inputApuesta) {
 				inputApuesta.value = (estado.apuestaSemanal / 100).toFixed(2);
 			}
-			if (aviso) aviso.textContent = "Respaldo restaurado correctamente.";
+			mostrarFeedback("mensajeAjustes", "Respaldo restaurado correctamente (copia previa gardada).");
 		} catch (error) {
-			if (aviso) aviso.textContent = "Erro ao ler o JSON: ficheiro corrupto ou non válido.";
+			mostrarFeedback("mensajeAjustes", "Erro ao ler o JSON: ficheiro corrupto ou non válido.");
 		} finally {
 			evento.target.value = "";
 		}
@@ -918,8 +1198,9 @@ document.getElementById("inputImportarJson").addEventListener("change", (evento)
 	lector.readAsText(archivo);
 });
 
+// Descarga una copia de seguridad completa del estado actual en formato .json
 document.getElementById("exportarJson").addEventListener("click", () => {
-	let aviso = document.getElementById("mensajeAjustes");
+	limpiarComentarios();
 	let fechaHoy = new Date().toISOString().slice(0, 10);
 	let jsonStr = JSON.stringify(estado, null, 2);
 	let blob = new Blob([jsonStr], { type: "application/json" });
@@ -933,18 +1214,21 @@ document.getElementById("exportarJson").addEventListener("click", () => {
 	enlace.remove();
 	URL.revokeObjectURL(url);
 
-	if (aviso) aviso.textContent = "Respaldo JSON exportado.";
+	mostrarFeedback("mensajeAjustes", "Respaldo JSON exportado.");
 });
 
+// Restaura en el campo de texto el valor actual guardado de la apuesta semanal
 document.getElementById("resetApuestaSemanal").addEventListener("click", () => {
+	limpiarComentarios();
 	document.getElementById("inputApuestaSemanal").value = (estado.apuestaSemanal / 100).toFixed(2);
 });
 
+// Exporta el historial completo de movimientos a un archivo de texto plano (.txt)
 document.getElementById("exportarMovimientosTxt").addEventListener("click", () => {
-	let aviso = document.getElementById("mensajeAjustes");
+	limpiarComentarios();
 
 	if (!estado.movimientos || estado.movimientos.length === 0) {
-		if (aviso) aviso.textContent = "Non hai movementos para exportar.";
+		mostrarFeedback("mensajeAjustes", "Non hai movementos para exportar.");
 		return;
 	}
 
@@ -974,11 +1258,18 @@ document.getElementById("exportarMovimientosTxt").addEventListener("click", () =
 	enlace.remove();
 	URL.revokeObjectURL(url);
 
-	if (aviso) aviso.textContent = "Movementos exportados a TXT.";
+	mostrarFeedback("mensajeAjustes", "Movementos exportados a TXT.");
 });
 
+/* ==========================================================================
+   RECARGA INDIVIDUAL DE SALDO
+   ========================================================================== */
+
+// Abre o cierra el formulario de recarga de saldo y carga el selector de participantes
 document.getElementById("sumarSaldo").addEventListener("click", () => {
+	cerrarMenusDesplegables();
 	limpiarComentarios();
+	ocultarSubpanelesAjustes();
 	ocultarFormularios(["nuevaApuesta", "novoPremio", "panelAjustes", ...PANELES_PARTICIPANTES]);
 	let formRecarga = document.getElementById("recargaSaldo");
 	if (!formRecarga) return;
@@ -991,12 +1282,13 @@ document.getElementById("sumarSaldo").addEventListener("click", () => {
 		}
 	}
 	actualizarVisibilidadListadoSegunPaneles();
+	sincronizarEstadosAria();
 });
 
+// Valida y suma el importe recargado al saldo del participante seleccionado
 document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) => {
 	evento.preventDefault();
 	limpiarComentarios();
-	let mensajeSaldo = document.getElementById("mensajeApuesta");
 	let selectParticipante = document.getElementById("selectParticipanteSaldo");
 	let inputImporteRecarga = document.getElementById("inputRecarga");
 	if (!selectParticipante || !inputImporteRecarga) return;
@@ -1009,7 +1301,7 @@ document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) 
 	let importeNum = Number(importeLimpio);
 
 	if (importeLimpio === "" || Number.isNaN(importeNum) || importeNum <= 0) {
-		if (mensajeSaldo) mensajeSaldo.innerHTML = "El importe no es correcto.";
+		mostrarFeedback("mensajeApuesta", "El importe no es correcto.");
 		return;
 	}
 
@@ -1031,5 +1323,6 @@ document.getElementById("botonRecargaSaldo").addEventListener("click", (evento) 
 	let formRecarga = document.getElementById("recargaSaldo");
 	if (formRecarga) formRecarga.setAttribute("hidden", "");
 	actualizarVisibilidadListadoSegunPaneles();
-	if (mensajeSaldo) mensajeSaldo.innerHTML = "Saldo engadido correctamente.";
+	sincronizarEstadosAria();
+	mostrarFeedback("mensajeApuesta", "Saldo engadido correctamente.");
 });
